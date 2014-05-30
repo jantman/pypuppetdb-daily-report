@@ -1,6 +1,6 @@
 from setuptools import setup
 from sys import version_info
-from pypuppetdb-daily-report.pypuppetdb-daily-report import VERSION
+from pypuppetdb_daily_report.pypuppetdb_daily_report import VERSION
 
 pyver_requires = ['pypuppetdb>=0.1.0, <=1.0.0']
 
@@ -19,15 +19,14 @@ classifiers = [
 ]
 
 setup(
-    name='pypuppetdb-daily-report',
+    name='pypuppetdb_daily_report',
     version=VERSION,
     author='Jason Antman',
     author_email='jason@jasonantman.com',
-    packages=['pypuppetdb-daily-report', 'pypuppetdb-daily-report.tests'],
-    scripts=['bin/pypuppetdb-daily-report'],
+    packages=['pypuppetdb_daily_report', 'pypuppetdb_daily_report.tests'],
     entry_points="""
     [console_scripts]
-    pypuppetdb-daily-report = pypuppetdb-daily-report
+    pypuppetdb_daily_report = pypuppetdb_daily_report
     """,
     url='http://github.com/jantman/pypuppetdb-daily-report/',
     license='Apache 2',
