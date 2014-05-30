@@ -42,28 +42,68 @@ class OptionsObject(object):
         """
         preseed with default values
         """
-        self.verify = False
-        self.config_file = None
-        self.testfile = None
-        self.ignorettl = False
-        self.sleep = None
+        self.dry_run = False
+        self.verbose = 0
+        self.host = None
+        self.num_days = 7
 
 
-class TestSetup:
+class TestOptions:
     """
-    Tests the configuration/option handling and CLI functions
+    Tests the CLI option/argument handling
     """
 
-    def test_options(self, monkeypatch):
+    def test_defaults(self):
         """
-        Test the parse_opts option parsing method
+        Test the parse_args option parsing method with default / no arguments
         """
-        def mockreturn(options):
-            assert options.verify == True
-            assert options.config_file == "configfile"
-            assert options.testfile == "mytestfile"
-            assert options.ignorettl == False
-        monkeypatch.setattr(pdr, "parse_args", mockreturn)
-        sys.argv = ['pydnstest', '-c', 'configfile', '-f', 'mytestfile', '-V']
-        x = pdr.parse_args()
+        argv = ['pypuppetdb_daily_report']
+        x = pdr.parse_args(argv)
+        assert x.dry_run == False
+        assert x.verbose == 0
 
+    def test_dryrun(self):
+        """
+        Test the parse_args option parsing method with dry-run specified
+        """
+        argv = ['pypuppetdb_daily_report', '-d']
+        x = pdr.parse_args(argv)
+        assert x.dry_run == True
+        argv = ['pypuppetdb_daily_report', '--dry-run']
+        x = pdr.parse_args(argv)
+        assert x.dry_run == True
+
+    def test_verbose(self):
+        """
+        Test the parse_opts option parsing method with verbose specified
+        """
+        argv = ['pypuppetdb_daily_report', '-v']
+        x = pdr.parse_args(argv)
+        assert x.verbose == 1
+
+    def test_debug(self):
+        """
+        Test the parse_opts option parsing method with debug specified
+        """
+        argv = ['pypuppetdb_daily_report', '-vv']
+        x = pdr.parse_args(argv)
+        assert x.verbose == 2
+
+    def test_host(self):
+        """
+        Test the parse_opts option parsing method with a PuppetDB URL
+        """
+        argv = ['pypuppetdb_daily_report', '-p', 'foobar']
+        x = pdr.parse_args(argv)
+        assert x.host == 'foobar'
+        argv = ['pypuppetdb_daily_report', '--puppetdb', 'foobar']
+        x = pdr.parse_args(argv)
+        assert x.host == 'foobar'
+
+    def test_num_days(self):
+        """
+        Test the parse_opts option parsing method with number of days specified
+        """
+        argv = ['pypuppetdb_daily_report', '-n', '14']
+        x = pdr.parse_args(argv)
+        assert x.num_days == 14

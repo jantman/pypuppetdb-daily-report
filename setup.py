@@ -1,6 +1,6 @@
 from setuptools import setup
 from sys import version_info
-from pypuppetdb_daily_report.pypuppetdb_daily_report import VERSION
+from pypuppetdb_daily_report import VERSION
 
 pyver_requires = ['pypuppetdb>=0.1.0, <=1.0.0']
 
