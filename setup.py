@@ -26,7 +26,7 @@ setup(
     packages=['pypuppetdb_daily_report', 'pypuppetdb_daily_report.tests'],
     entry_points="""
     [console_scripts]
-    pypuppetdb_daily_report = pypuppetdb_daily_report
+    pypuppetdb_daily_report = pypuppetdb_daily_report.pypuppetdb_daily_report:console_entry_point
     """,
     url='http://github.com/jantman/pypuppetdb-daily-report/',
     license='Apache 2',
