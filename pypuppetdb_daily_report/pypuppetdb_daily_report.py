@@ -80,11 +80,9 @@ def get_dashboard_metrics(pdb):
     logger.debug("getting dashboard metrics...")
 
     metrics = {}
-    
+    metrics['JVM Heap'] = {'path': 'java.lang:type=Memory', value=None}
 
     """
-  .url("/v2/metrics/mbean/java.lang:type=Memory")
-  .description("JVM Heap")
   .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.query.population:type=default,name=num-nodes")
   .description("Nodes")
   .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.query.population:type=default,name=num-resources")
@@ -120,7 +118,7 @@ def get_dashboard_metrics(pdb):
   .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.command.dlo:type=global,name=messages")
   .description("Discarded Messages")
     """
-    pass
+    return metrics
 
 def send_mail(body, dry_run=False):
     """
