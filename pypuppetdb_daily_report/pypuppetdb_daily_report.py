@@ -37,6 +37,7 @@ import optparse
 import logging
 from . import VERSION
 from pypuppetdb import connect
+import requests
 
 FORMAT = "[%(levelname)s %(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
 logging.basicConfig(level=logging.ERROR, format=FORMAT)
@@ -80,45 +81,50 @@ def get_dashboard_metrics(pdb):
     logger.debug("getting dashboard metrics...")
 
     metrics = {}
-    metrics['JVM Heap'] = {'path': 'java.lang:type=Memory', value=None}
+    metrics['JVM Heap'] = {'path': 'java.lang:type=Memory', 'order': 1, 'value': None}
+    metrics['Nodes'] = {'path': 'com.puppetlabs.puppetdb.query.population:type=default,name=num-nodes', 'order': 2, 'value': None}
+    metrics['Resources'] = {'path': 'com.puppetlabs.puppetdb.query.population:type=default,name=num-resources', 'order': 3, 'value': None}
+    metrics['Resource Duplication'] = {'path': 'com.puppetlabs.puppetdb.query.population:type=default,name=pct-resource-dupes', 'order': 4, 'value': None}
+    metrics['Catalog duplication'] = {'path': 'com.puppetlabs.puppetdb.scf.storage:type=default,name=duplicate-pct', 'order': 5, 'value': None}
+    metrics['Command Queue'] = {'path': 'org.apache.activemq:BrokerName=localhost,Type=Queue,Destination=com.puppetlabs.puppetdb.commands', 'order': 6, 'value': None}
+    metrics['Command Processing Time'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=processing-time', 'order': 7, 'value': None}
+    metrics['Command Processing'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=processed', 'order': 8, 'value': None}
+    metrics['Processed'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=processed', 'order': 9, 'value': None}
+    metrics['Retired'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=retried', 'order': 10, 'value': None}
+    metrics['Discarded'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=discarded', 'order': 11, 'value': None}
+    metrics['Rejected'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=fatal', 'order': 12, 'value': None}
+    metrics['Enqueueing'] = {'path': 'com.puppetlabs.puppetdb.http.server:type=/v2/commands,name=service-time', 'order': 13, 'value': None}
+    metrics['Collection Queries'] = {'path': 'com.puppetlabs.puppetdb.http.server:type=/v2/resources,name=service-time', 'order': 14, 'value': None}
+    metrics['DB Compaction'] = {'path': 'com.puppetlabs.puppetdb.scf.storage:type=default,name=gc-time', 'order': 15, 'value': None}
+    metrics['DLO Compression'] = {'path': 'com.puppetlabs.puppetdb.command.dlo:type=global,name=compression', 'order': 16, 'value': None}
+    metrics['DLO Size on Disk'] = {'path': 'com.puppetlabs.puppetdb.command.dlo:type=global,name=filesize', 'order': 17, 'value': None}
+    metrics['Discarded Messages'] = {'path': 'com.puppetlabs.puppetdb.command.dlo:type=global,name=messages', 'order': 18, 'value': None}
 
-    """
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.query.population:type=default,name=num-nodes")
-  .description("Nodes")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.query.population:type=default,name=num-resources")
-  .description("Resources")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.query.population:type=default,name=pct-resource-dupes")
-  .description("Resource duplication")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.scf.storage:type=default,name=duplicate-pct")
-  .description("Catalog duplication")
-  .url("/v2/metrics/mbean/org.apache.activemq:BrokerName=localhost,Type=Queue,Destination=com.puppetlabs.puppetdb.commands")
-  .description("Command Queue")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.command:type=global,name=processing-time")
-  .description("Command Processing")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.command:type=global,name=processed")
-  .description("Command Processing")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.command:type=global,name=processed")
-  .description("Processed")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.command:type=global,name=retried")
-  .description("Retried")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.command:type=global,name=discarded")
-  .description("Discarded")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.command:type=global,name=fatal")
-  .description("Rejected")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.http.server:type=/v2/commands,name=service-time")
-  .description("Enqueueing")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.http.server:type=/v2/resources,name=service-time")
-  .description("Collection Queries")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.scf.storage:type=default,name=gc-time")
-  .description("DB Compaction")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.command.dlo:type=global,name=compression")
-  .description("DLO Compression")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.command.dlo:type=global,name=filesize")
-  .description("DLO Size on Disk")
-  .url("/v2/metrics/mbean/com.puppetlabs.puppetdb.command.dlo:type=global,name=messages")
-  .description("Discarded Messages")
-    """
+    for metric in metrics:
+        logger.debug("getting metric: %s" % metric)
+        try:
+            metrics[metric]['value'] = pdb.metric(metrics[metric]['path'])
+            logger.debug("got raw value: %s" % metrics[metric]['value'])
+            metrics[metric]['value'] = metric_value(metrics[metric]['value'])
+            logger.debug("setting value to: %s" % metrics[metric]['value'])
+        except requests.exceptions.HTTPError:
+            logger.debug("unable to get value for metric: %s" % metric)
+    logger.info("got dashboard metrics")
     return metrics
+
+
+def metric_value(m):
+    """
+    Takes a dict returned by the metric() API endpoint, returns the formatted value we want to track.
+    """
+    if 'Value' in m:
+        return "{:,f}".format(m['Value'])
+    if 'MeanRate' in m and 'Count' in m:
+        return "{:,f} ({:d})".format(m['MeanRate'], m['Count'])
+    if 'MeanRate' in m:
+        return "{:,f}".format(m['MeanRate'])
+    return m
+
 
 def send_mail(body, dry_run=False):
     """
