@@ -81,12 +81,10 @@ def get_dashboard_metrics(pdb):
     logger.debug("getting dashboard metrics...")
 
     metrics = {}
-    metrics['JVM Heap'] = {'path': 'java.lang:type=Memory', 'order': 1, 'value': None}
     metrics['Nodes'] = {'path': 'com.puppetlabs.puppetdb.query.population:type=default,name=num-nodes', 'order': 2, 'value': None}
     metrics['Resources'] = {'path': 'com.puppetlabs.puppetdb.query.population:type=default,name=num-resources', 'order': 3, 'value': None}
     metrics['Resource Duplication'] = {'path': 'com.puppetlabs.puppetdb.query.population:type=default,name=pct-resource-dupes', 'order': 4, 'value': None}
     metrics['Catalog duplication'] = {'path': 'com.puppetlabs.puppetdb.scf.storage:type=default,name=duplicate-pct', 'order': 5, 'value': None}
-    metrics['Command Queue'] = {'path': 'org.apache.activemq:BrokerName=localhost,Type=Queue,Destination=com.puppetlabs.puppetdb.commands', 'order': 6, 'value': None}
     metrics['Command Processing Time'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=processing-time', 'order': 7, 'value': None}
     metrics['Command Processing'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=processed', 'order': 8, 'value': None}
     metrics['Processed'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=processed', 'order': 9, 'value': None}
@@ -110,6 +108,52 @@ def get_dashboard_metrics(pdb):
         except requests.exceptions.HTTPError:
             logger.debug("unable to get value for metric: %s" % metric)
     logger.info("got dashboard metrics")
+
+    # metrics requiring special handling/formatting:
+    jvmheap = pdb.metric('java.lang:type=Memory')
+    logger.debug("got jvmheap metric raw value: %s" % jvmheap)
+    jvmheap_s = "{:.2%} ({:d}/{:d})".format((jvmheap['HeapMemoryUsage']['used'] / jvmheap['HeapMemoryUsage']['max']),
+                                            jvmheap['HeapMemoryUsage']['used'], jvmheap['HeapMemoryUsage']['max'])
+    jvmnonheap_s = "{:.2%} ({:d}/{:d})".format((jvmheap['NonHeapMemoryUsage']['used'] / jvmheap['NonHeapMemoryUsage']['max']),
+                                            jvmheap['NonHeapMemoryUsage']['used'], jvmheap['NonHeapMemoryUsage']['max'])
+    metrics['JVM Heap Memory Usage'] = {'path': 'java.lang:type=Memory', 'order': 1, 'value': jvmheap_s}
+    metrics['JVM Non-Heap Memory Usage'] = {'path': 'java.lang:type=Memory', 'order': 1, 'value': jvmnonheap_s}
+    cmd_queue = pdb.metric('org.apache.activemq:BrokerName=localhost,Type=Queue,Destination=com.puppetlabs.puppetdb.commands')
+    logger.debug("got cmd_queue metric raw value: %s" % cmd_queue)
+    """
+[DEBUG pypuppetdb_daily_report.py:122 - get_dashboard_metrics() ] got cmd_queue metric raw value: 
+{u'CacheEnabled': True,
+u'ProducerCount': 2,
+u'DequeueCount': 240957,
+u'ConsumerCount': 2,
+u'QueueSize': 0,
+u'MaxPageSize': 200,
+u'AverageEnqueueTime': 0.6487796577812639,
+u'ExpiredCount': 0,
+u'Subscriptions': u'[Ljavax.management.ObjectName;@372a0fbb',
+u'MinEnqueueTime': 2,
+u'EnqueueCount': 240957,
+u'InFlightCount': 0,
+u'CursorFull': False,
+u'PrioritizedMessages': False,
+u'MaxEnqueueTime': 3759,
+u'DispatchCount': 240957,
+u'CursorPercentUsage': 0,
+u'Name': u'com.puppetlabs.puppetdb.commands',
+u'MaxAuditDepth': 2048,
+u'ProducerFlowControl': True,
+u'MaxProducersToAudit': 1024,
+u'MemoryPercentUsage': 0,
+u'UseCache': True,
+u'CursorMemoryUsage': 0,
+u'AlwaysRetroactive': False,
+u'BlockedProducerWarningInterval': 30000,
+u'SlowConsumerStrategy': u"java.lang.IllegalArgumentException: No implementation of method: :objects->data of protocol: #'clojure.java.jmx/Destract found for class: nil",
+u'MemoryLimit': 67108864,
+u'MemoryUsagePortion': 1.0}
+    """
+    #metrics['Command Queue'] = {'path': 'org.apache.activemq:BrokerName=localhost,Type=Queue,Destination=com.puppetlabs.puppetdb.commands', 'order': 6, 'value': None}
+
     return metrics
 
 
@@ -118,6 +162,8 @@ def metric_value(m):
     Takes a dict returned by the metric() API endpoint, returns the formatted value we want to track.
     """
     if 'Value' in m:
+        if m['Value'] == 0.0:
+            return "0"
         return "{:,f}".format(m['Value'])
     if 'MeanRate' in m and 'Count' in m:
         return "{:,f} ({:d})".format(m['MeanRate'], m['Count'])
