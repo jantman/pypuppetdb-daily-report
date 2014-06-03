@@ -62,10 +62,6 @@ def main(hostname, dry_run=False):
     # snapshot of PuppetDB metrics from the dashboard
     metrics = get_dashboard_metrics(pdb)
 
-    # number of nodes with no successful runs, 50+% failed runs, any failed runs, less than 40 successful runs in 24 hours
-    # top 10 failing resources, along with count of nodes they're failing on
-    # top 10 modules causing failures
-
     # essentially figure out all these for yesterday, build the tables, serialize the result as JSON somewhere. then just keep the last ~7 days json files
 
     return True
@@ -121,7 +117,7 @@ def get_dashboard_metrics(pdb):
     cmd_queue = pdb.metric('org.apache.activemq:BrokerName=localhost,Type=Queue,Destination=com.puppetlabs.puppetdb.commands')
     logger.debug("got cmd_queue metric raw value: %s" % cmd_queue)
     """
-[DEBUG pypuppetdb_daily_report.py:122 - get_dashboard_metrics() ] got cmd_queue metric raw value: 
+[DEBUG pypuppetdb_daily_report.py:122 - get_dashboard_metrics() ] got cmd_queue metric raw value:
 {u'CacheEnabled': True,
 u'ProducerCount': 2,
 u'DequeueCount': 240957,
