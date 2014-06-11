@@ -32,6 +32,8 @@ import shutil
 import mock
 import logging
 import datetime
+from freezegun import freeze_time
+from freezegun.api import FakeDatetime
 
 from pypuppetdb_daily_report import pypuppetdb_daily_report as pdr
 
@@ -49,6 +51,7 @@ class OptionsObject(object):
         self.verbose = 0
         self.host = None
         self.num_days = 7
+        self.cache_dir = '/tmp/.pypuppetdb_daily_report'
 
 
 class Test_parse_args:
@@ -61,9 +64,26 @@ class Test_parse_args:
         Test the parse_args option parsing method with default / no arguments
         """
         argv = ['pypuppetdb_daily_report']
-        x = pdr.parse_args(argv)
+        path_mock = mock.MagicMock()
+        path_mock.return_value = '/foobar/.pypuppetdb_daily_report'
+        with mock.patch('os.path.expanduser', path_mock):
+            x = pdr.parse_args(argv)
         assert x.dry_run == False
         assert x.verbose == 0
+        assert x.cache_dir == '/foobar/.pypuppetdb_daily_report'
+
+    def test_cache_dir(self):
+        """
+        Test the parse_args option parsing method with cache-dir specified
+        """
+        argv = ['pypuppetdb_daily_report', '-c', '/tmp/foobar']
+        path_mock = mock.MagicMock()
+        path_mock.return_value = '/foobar/.pypuppetdb_daily_report'
+        with mock.patch('os.path.expanduser', path_mock):
+            x = pdr.parse_args(argv)
+        assert x.dry_run == False
+        assert x.verbose == 0
+        assert x.cache_dir == '/tmp/foobar'
 
     def test_dryrun(self):
         """
@@ -207,9 +227,69 @@ class Test_get_data_for_timespan:
 
 class Test_data_for_timespan:
 
-    def test_today(self):
-        """ data for today """
-        assert 1 == "not implemented yet"
+    def test_is_cached(self):
+        """ data is cached """
+        path_exists_mock = mock.MagicMock()
+        path_exists_mock.return_value = True
+        query_mock = mock.MagicMock()
+        query_mock.return_value = {}
+
+        raw_json = '{"foo": 123}'
+        mock_open = mock.mock_open(read_data=raw_json)
+        if sys.version_info[0] == 3:
+            mock_target = 'builtins.open'
+        else:
+            mock_target = '__builtin__.open'
+
+        with mock.patch('os.path.exists', path_exists_mock):
+            with mock.patch(mock_target, mock_open, create=True):
+                with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock):
+                    result = pdr.get_data_for_timespan(None,
+                                                       datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
+                                                       datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59),
+                                                       cache_dir='/tmp/cache')
+        assert path_exists_mock.call_count == 1
+        assert path_exists_mock.call_args == mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.json')
+        assert mock_open.call_count == 1
+        fh = mock_open.return_value.__enter__.return_value
+        assert fh.read.call_count == 1
+        assert result == {'foo': 123}
+        assert fh.write.call_count == 0
+        assert query_mock.call_count == 0
+
+
+    def test_not_cached(self):
+        """ data not cached """
+        path_exists_mock = mock.MagicMock()
+        path_exists_mock.return_value = False
+        query_mock = mock.MagicMock()
+        query_mock.return_value = {"foo": 123}
+
+        mock_open = mock.mock_open()
+        if sys.version_info[0] == 3:
+            mock_target = 'builtins.open'
+        else:
+            mock_target = '__builtin__.open'
+
+        with mock.patch('os.path.exists', path_exists_mock):
+            with mock.patch(mock_target, mock_open, create=True):
+                with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock):
+                    result = pdr.get_data_for_timespan(None,
+                                                       datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
+                                                       datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59),
+                                                       cache_dir='/tmp/cache')
+        assert path_exists_mock.call_count == 1
+        assert path_exists_mock.call_args == mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.json')
+        assert mock_open.call_count == 1
+        fh = mock_open.return_value.__enter__.return_value
+        assert fh.read.call_count == 0
+        assert fh.write.call_count == 1
+        assert fh.write.call_args == mock.call('{"foo": 123}')
+        assert query_mock.call_count == 1
+        assert query_mock.call_args == mock.call(None,
+                                                 datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
+                                                 datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+        )
 
 
 class Test_main:
@@ -217,17 +297,30 @@ class Test_main:
 
     def test_default(self):
         """ as default as possible, one test """
-        pdb_mock = mock.MagicMock()
+        pdb_mock = mock.MagicMock(spec='pypuppetdb.api.v3.API')
+        connect_mock = mock.MagicMock()
+        connect_mock.return_value = pdb_mock
         get_metrics_mock = mock.MagicMock()
-        dt_now_mock = mock.MagicMock()
-        dt_now_mock.return_value = datetime.datetime(2014, 06, 11, 08, 15, 43, 1)
+        dft_mock = mock.MagicMock()
+        with freeze_time("2014-06-11 08:15:43"):
+            with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.connect', connect_mock):
+                with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_dashboard_metrics', get_metrics_mock):
+                    with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_data_for_timespan', dft_mock):
+                        pdr.main('foobar')
+        assert connect_mock.call_count == 1
+        assert connect_mock.call_args == mock.call(host='foobar')
 
-        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.connect', pdb_mock):
-            with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_dashboard_metrics', get_metrics_mock):
-                with mock.patch('datetime.datetime.now', dt_now_mock):
-                    foo = pdr.main('foobar')
-        assert pdb_mock.call_count == 1
-        assert pdb_mock.call_args == mock.call(host='foobar')
         assert get_metrics_mock.call_count == 1
-        assert foo == True
-        assert dt_now_mock.call_count == 1
+        assert get_metrics_mock.call_args == mock.call(pdb_mock)
+
+        assert dft_mock.call_count == 7
+        dft_expected = [
+            mock.call(pdb_mock, FakeDatetime(2014, 06, 10, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 10, hour=23, minute=59, second=59), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 06, 9, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 9, hour=23, minute=59, second=59), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 06, 8, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 8, hour=23, minute=59, second=59), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 06, 7, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 7, hour=23, minute=59, second=59), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 06, 6, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 6, hour=23, minute=59, second=59), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 06, 5, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 5, hour=23, minute=59, second=59), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 06, 4, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 4, hour=23, minute=59, second=59), cache_dir=None),
+        ]
+        assert dft_mock.mock_calls == dft_expected

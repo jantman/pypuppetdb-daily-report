@@ -39,6 +39,8 @@ from . import VERSION
 from pypuppetdb import connect
 import requests
 import datetime
+import anyjson
+import os
 
 FORMAT = "[%(levelname)s %(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
 logging.basicConfig(level=logging.ERROR, format=FORMAT)
@@ -49,7 +51,7 @@ TOP_MODULES_COUNT = 10
 TOP_RESOURCES_COUNT = 10
 
 
-def main(hostname, num_days=7, dry_run=False):
+def main(hostname, num_days=7, cache_dir=None, dry_run=False):
     """
     main entry point
 
@@ -57,6 +59,8 @@ def main(hostname, num_days=7, dry_run=False):
     :type hostname: string
     :param num_days: the number of days to report on, default 7
     :type num_days: int
+    :param cache_dir: absolute path to where to cache data from PuppetDB
+    :type cache_dir: string
     :param dry_run: whether to actually send, or just print what would be sent
     :type dry_run: boolean
     """
@@ -66,32 +70,51 @@ def main(hostname, num_days=7, dry_run=False):
     metrics = get_dashboard_metrics(pdb)
 
     # essentially figure out all these for yesterday, build the tables, serialize the result as JSON somewhere. then just keep the last ~7 days json files
+    date_data = {}
     start_date = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - datetime.timedelta(seconds=1)
-    for query_date in (start_date - timedelta(n) for n in range(num_days)):
-        pass
-
+    for query_date in (start_date - datetime.timedelta(n) for n in range(num_days)):
+        end = query_date
+        start = query_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        date_s = query_date.strftime('%a %m/%d')
+        date_data[date_s] = get_data_for_timespan(pdb, start, end, cache_dir=cache_dir)
     return True
 
 
-def data_for_timespan(pdb, start, end):
+def get_data_for_timespan(pdb, start, end, cache_dir=None):
     """
     Get the data for a specified timespan, from cache (if possible) or else
     from PuppetDB directly.
 
     :param pdb: object representing a connected pypuppetdb instance
     :type pdb: one of the pypuppetdb.API classes
+    :param cache_dir: absolute path to where to cache data from PuppetDB
+    :type cache_dir: string
     """
-    pass
+    if cache_dir is not None:
+        cache_filename = "data_{start}_{end}.json".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
+                                                          end=end.strftime('%Y-%m-%d_%H-%M-%S'))
+        cache_fpath = os.path.join(cache_dir, cache_filename)
+        if os.path.exists(cache_fpath):
+            with open(cache_fpath, 'r') as fh:
+                raw = fh.read()
+            data = anyjson.deserialize(raw)
+            return data
+    data = query_data_for_timespan(pdb, start, end)
+    if cache_dir is None:
+        return data
+    with open(cache_fpath, 'w') as fh:
+        fh.write(anyjson.serialize(data))
+    return data
 
 
-def get_data_for_timespan(pdb, start, end):
+def query_data_for_timespan(pdb, start, end):
     """
     Retrieve all desired data for one day, from PuppetDB
 
     :param pdb: object representing a connected pypuppetdb instance
     :type pdb: one of the pypuppetdb.API classes
     """
-    pass
+    return {}
 
 
 def get_dashboard_metrics(pdb):
@@ -191,6 +214,10 @@ def parse_args(argv):
     p.add_option('-v', '--verbose', dest='verbose', action='count', default=0,
                  help='verbose output. specify twice for debug-level output.')
 
+    cache_dir = os.path.expanduser('~/.pypuppetdb_daily_report')
+    p.add_option('-c', '--cache-dir', dest='cache_dir', action='store', type='string', default=cache_dir,
+                 help='data cache directory (default: {cache_dir})'.format(cache_dir=cache_dir))
+
     options, args = p.parse_args(argv)
 
     return options
@@ -208,7 +235,7 @@ def console_entry_point():
     if opts:
         if not opts.host:
             raise SystemExit("ERROR: you must specify the PuppetDB hostname with -p|--puppetdb")
-        main(opts.host, num_days=opts.num_days, dry_run=opts.dry_run)
+        main(opts.host, num_days=opts.num_days, dry_run=opts.dry_run, cache_dir=opts.cache_dir)
 
 
 if __name__ == "__main__":
