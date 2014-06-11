@@ -16,6 +16,8 @@ The final plan is something like this:
 * should cache to disk at a default path, like /tmp/pypuppetdb_daily_report. Have an option to change that path, or optionally
   (i.e. with a value like "none") disable all caching (don't touch the cache at all)
 * first version should display the following for today and the last N days:
+  * the current values of 'puppetversion' and 'facterversion' facts for today
+  * perhaps a summary of client OSes
   * dashboard metrics (averages where possible)
   * total number of runs, number of runs with failures
   * number of nodes with:
