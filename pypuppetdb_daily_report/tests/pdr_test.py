@@ -31,6 +31,7 @@ import os
 import shutil
 import mock
 import logging
+import datetime
 
 from pypuppetdb_daily_report import pypuppetdb_daily_report as pdr
 
@@ -185,3 +186,48 @@ class Test_console_entry_point:
         assert main_mock.call_count == 1
         assert logger_mock.setLevel.call_count == 1
         assert logger_mock.setLevel.call_args == mock.call(logging.DEBUG)
+
+
+class Test_get_dashboard_metrics:
+
+    def test_get(self):
+        """ defaults """
+        pdb_mock = mock.MagicMock()
+        foo = pdr.get_dashboard_metrics(pdb_mock)
+        assert pdb_mock.metric.call_count == 17
+        assert isinstance(foo, dict)
+
+
+class Test_get_data_for_timespan:
+
+    def test_get(self):
+        """ defaults """
+        assert 1 == "not implemented yet"
+
+
+class Test_data_for_timespan:
+
+    def test_today(self):
+        """ data for today """
+        assert 1 == "not implemented yet"
+
+
+class Test_main:
+    """ tests for main() function """
+
+    def test_default(self):
+        """ as default as possible, one test """
+        pdb_mock = mock.MagicMock()
+        get_metrics_mock = mock.MagicMock()
+        dt_now_mock = mock.MagicMock()
+        dt_now_mock.return_value = datetime.datetime(2014, 06, 11, 08, 15, 43, 1)
+
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.connect', pdb_mock):
+            with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_dashboard_metrics', get_metrics_mock):
+                with mock.patch('datetime.datetime.now', dt_now_mock):
+                    foo = pdr.main('foobar')
+        assert pdb_mock.call_count == 1
+        assert pdb_mock.call_args == mock.call(host='foobar')
+        assert get_metrics_mock.call_count == 1
+        assert foo == True
+        assert dt_now_mock.call_count == 1

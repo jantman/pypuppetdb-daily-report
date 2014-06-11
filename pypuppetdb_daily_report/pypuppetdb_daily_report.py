@@ -38,6 +38,7 @@ import logging
 from . import VERSION
 from pypuppetdb import connect
 import requests
+import datetime
 
 FORMAT = "[%(levelname)s %(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
 logging.basicConfig(level=logging.ERROR, format=FORMAT)
@@ -48,12 +49,14 @@ TOP_MODULES_COUNT = 10
 TOP_RESOURCES_COUNT = 10
 
 
-def main(hostname, dry_run=False):
+def main(hostname, num_days=7, dry_run=False):
     """
     main entry point
 
     :param hostname: PuppetDB hostname
     :type hostname: string
+    :param num_days: the number of days to report on, default 7
+    :type num_days: int
     :param dry_run: whether to actually send, or just print what would be sent
     :type dry_run: boolean
     """
@@ -63,6 +66,9 @@ def main(hostname, dry_run=False):
     metrics = get_dashboard_metrics(pdb)
 
     # essentially figure out all these for yesterday, build the tables, serialize the result as JSON somewhere. then just keep the last ~7 days json files
+    start_date = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - datetime.timedelta(seconds=1)
+    for query_date in (start_date - timedelta(n) for n in range(num_days)):
+        pass
 
     return True
 
@@ -118,7 +124,7 @@ def get_dashboard_metrics(pdb):
     for metric in metrics:
         logger.debug("getting metric: %s" % metric)
         try:
-            metrics[metric]['value'] = pdb.metric(metrics[metric]['path'])
+            metrics[metric]['api_response'] = pdb.metric(metrics[metric]['path'])
             logger.debug("got raw value: %s" % metrics[metric]['value'])
         except requests.exceptions.HTTPError:
             logger.debug("unable to get value for metric: %s" % metric)
@@ -202,7 +208,7 @@ def console_entry_point():
     if opts:
         if not opts.host:
             raise SystemExit("ERROR: you must specify the PuppetDB hostname with -p|--puppetdb")
-        main(opts.host, dry_run=opts.dry_run)
+        main(opts.host, num_days=opts.num_days, dry_run=opts.dry_run)
 
 
 if __name__ == "__main__":
