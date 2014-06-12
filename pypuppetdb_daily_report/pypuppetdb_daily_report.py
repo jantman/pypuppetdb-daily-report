@@ -94,6 +94,8 @@ def get_data_for_timespan(pdb, start, end, cache_dir=None):
         cache_filename = "data_{start}_{end}.json".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
                                                           end=end.strftime('%Y-%m-%d_%H-%M-%S'))
         cache_fpath = os.path.join(cache_dir, cache_filename)
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
         if os.path.exists(cache_fpath):
             with open(cache_fpath, 'r') as fh:
                 raw = fh.read()
@@ -114,7 +116,12 @@ def query_data_for_timespan(pdb, start, end):
     :param pdb: object representing a connected pypuppetdb instance
     :type pdb: one of the pypuppetdb.API classes
     """
-    return {}
+    res = {}
+    nodes = pdb.nodes()
+    print(nodes)
+    res['nodes'] = [n.name for n in nodes]
+    print(res)
+    return res
 
 
 def get_dashboard_metrics(pdb):
