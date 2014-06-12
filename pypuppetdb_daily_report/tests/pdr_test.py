@@ -286,7 +286,6 @@ class Test_get_data_for_timespan:
             mock_target = '__builtin__.open'
 
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.os', os_mock):
-        #with mock.patch('os', os_mock):
             with mock.patch(mock_target, mock_open, create=True):
                 with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock):
                     result = pdr.get_data_for_timespan(None,
@@ -295,10 +294,10 @@ class Test_get_data_for_timespan:
                                                        cache_dir='/tmp/cache')
         assert os_mock.path.exists.call_count == 2
         assert os_mock.path.exists.call_args_list == [mock.call('/tmp/cache'),
-                                                   mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.json')
-                                                   ]
+                                                      mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.json')
+                                                      ]
         assert os_mock.makedirs.call_count == 1
-        #assert makedirs_mock.call_args == mock.call('/tmp/cache')
+        assert os_mock.makedirs.call_args == mock.call('/tmp/cache')
         assert mock_open.call_count == 1
         fh = mock_open.return_value.__enter__.return_value
         assert fh.read.call_count == 0
@@ -312,8 +311,12 @@ class Test_get_data_for_timespan:
 
     def test_not_cached(self):
         """ data not cached """
-        path_exists_mock = mock.MagicMock()
-        path_exists_mock.return_value = False
+        def path_join(*args):
+            return os.path.join(*args)
+        os_mock = mock.MagicMock()
+        os_mock.path.exists.return_value = False
+        os_mock.makedirs.return_value = True
+        os_mock.path.join.side_effect = path_join
         query_mock = mock.MagicMock()
         query_mock.return_value = {"foo": 123}
 
@@ -323,17 +326,17 @@ class Test_get_data_for_timespan:
         else:
             mock_target = '__builtin__.open'
 
-        with mock.patch('os.path.exists', path_exists_mock):
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.os', os_mock):
             with mock.patch(mock_target, mock_open, create=True):
                 with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock):
                     result = pdr.get_data_for_timespan(None,
                                                        datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
                                                        datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59),
                                                        cache_dir='/tmp/cache')
-        assert path_exists_mock.call_count == 2
-        assert path_exists_mock.call_args_list == [mock.call('/tmp/cache'),
-                                                   mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.json')
-                                                   ]
+        assert os_mock.path.exists.call_count == 2
+        assert os_mock.path.exists.call_args_list == [mock.call('/tmp/cache'),
+                                                      mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.json')
+                                                      ]
         assert mock_open.call_count == 1
         fh = mock_open.return_value.__enter__.return_value
         assert fh.read.call_count == 0
@@ -422,7 +425,7 @@ class Test_query_data_for_timespan:
         node3 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
         node3.name = u'node3'
         pdb_mock = mock.MagicMock(spec=pypuppetdb.api.v3.API, autospec=True)
-        #pdb_mock.nodes.iter.return_value.__iter__.return_value = iter([node1, node2, node3])
+        # pdb_mock.nodes.iter.return_value.__iter__.return_value = iter([node1, node2, node3])
         pdb_mock.nodes.iter.return_value = iter([node1, node2, node3])
 
         foo = pdr.query_data_for_timespan(pdb_mock,
