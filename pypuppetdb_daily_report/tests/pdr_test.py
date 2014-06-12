@@ -425,14 +425,15 @@ class Test_query_data_for_timespan:
         node3 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
         node3.name = u'node3'
         pdb_mock = mock.MagicMock(spec=pypuppetdb.api.v3.API, autospec=True)
-        # pdb_mock.nodes.iter.return_value.__iter__.return_value = iter([node1, node2, node3])
-        pdb_mock.nodes.iter.return_value = iter([node1, node2, node3])
+        pdb_mock.nodes.__iter__.return_value = iter([node1, node2, node3])
 
         foo = pdr.query_data_for_timespan(pdb_mock,
                                           datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
                                           datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
                                           )
         assert pdb_mock.nodes.call_count == 1
+        print(pdb_mock.mock_calls)
+        assert pdb_mock.nodes.__iter__.call_count == 1
         assert foo['nodes'] == ['node1', 'node2', 'node3']
 
 
