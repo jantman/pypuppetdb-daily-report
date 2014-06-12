@@ -118,7 +118,6 @@ def query_data_for_timespan(pdb, start, end):
     """
     res = {}
     nodes = pdb.nodes()
-    print(nodes)
     res['nodes'] = [n.name for n in nodes]
     print(res)
     return res
