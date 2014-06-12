@@ -34,6 +34,7 @@ import logging
 import datetime
 from freezegun import freeze_time
 from freezegun.api import FakeDatetime
+from requests.exceptions import HTTPError
 
 from pypuppetdb_daily_report import pypuppetdb_daily_report as pdr
 
@@ -217,6 +218,17 @@ class Test_get_dashboard_metrics:
         assert pdb_mock.metric.call_count == 17
         assert isinstance(foo, dict)
 
+    def test_exception(self):
+        """ throws a HTTP exception """
+        pdb_mock = mock.MagicMock()
+        def side_effect(*args, **kwargs):
+            raise HTTPError('foo')
+        pdb_mock.metric.side_effect = side_effect
+        logger_mock = mock.MagicMock()
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
+            foo = pdr.get_dashboard_metrics(pdb_mock)
+        assert pdb_mock.metric.call_count == 17
+        assert logger_mock.debug.call_args == mock.call("unable to get value for metric: Catalog duplication")
 
 class Test_get_data_for_timespan:
 
@@ -257,7 +269,6 @@ class Test_data_for_timespan:
         assert fh.write.call_count == 0
         assert query_mock.call_count == 0
 
-
     def test_not_cached(self):
         """ data not cached """
         path_exists_mock = mock.MagicMock()
@@ -289,7 +300,38 @@ class Test_data_for_timespan:
         assert query_mock.call_args == mock.call(None,
                                                  datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
                                                  datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
-        )
+                                                 )
+
+    def test_no_cache(self):
+        """ caching disabled """
+        path_exists_mock = mock.MagicMock()
+        path_exists_mock.return_value = False
+        query_mock = mock.MagicMock()
+        query_mock.return_value = {"foo": 123}
+
+        mock_open = mock.mock_open()
+        if sys.version_info[0] == 3:
+            mock_target = 'builtins.open'
+        else:
+            mock_target = '__builtin__.open'
+
+        with mock.patch('os.path.exists', path_exists_mock):
+            with mock.patch(mock_target, mock_open, create=True):
+                with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock):
+                    result = pdr.get_data_for_timespan(None,
+                                                       datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
+                                                       datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59),
+                                                       cache_dir=None)
+        assert path_exists_mock.call_count == 0
+        assert mock_open.call_count == 0
+        fh = mock_open.return_value.__enter__.return_value
+        assert fh.read.call_count == 0
+        assert fh.write.call_count == 0
+        assert query_mock.call_count == 1
+        assert query_mock.call_args == mock.call(None,
+                                                 datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
+                                                 datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                                                 )
 
 
 class Test_main:
@@ -324,3 +366,10 @@ class Test_main:
             mock.call(pdb_mock, FakeDatetime(2014, 06, 4, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 4, hour=23, minute=59, second=59), cache_dir=None),
         ]
         assert dft_mock.mock_calls == dft_expected
+
+
+class Test_query_data_for_timespan:
+
+    def test_simple(self):
+        """ simple test """
+        assert 1 == 2
