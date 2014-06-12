@@ -1,0 +1,20 @@
+<!-- begin metrics.html -->
+<h2>PuppetDB Metrics</h2>
+<table border="1">
+<tr><th>Metric</th>{% for date_s in dates %}<th>{{ date_s }}</th>{% endfor %}</tr>
+{% for metric in data[dates[0]].metrics %}
+  <tr>
+  <th>{{ metric }}</th>
+  {% for date_s in dates %}
+    <td>
+    {% if 'metrics' in data[date_s] %}
+      {{ data[date_s]['metrics'][metric]['formatted'] }}
+    {% else %}
+      &nbsp;
+    {% endif %}
+    </td>
+  {% endfor %}
+  </tr>
+{% endfor %}
+</table>
+<!-- end metrics.html -->

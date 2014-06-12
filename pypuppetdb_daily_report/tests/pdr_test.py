@@ -32,6 +32,7 @@ import shutil
 import mock
 import logging
 import datetime
+import re
 from freezegun import freeze_time
 from freezegun.api import FakeDatetime
 from requests.exceptions import HTTPError
@@ -216,8 +217,11 @@ class Test_get_dashboard_metrics:
     def test_get(self):
         """ defaults """
         pdb_mock = mock.MagicMock()
-        foo = pdr.get_dashboard_metrics(pdb_mock)
+        val_mock = mock.MagicMock()
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.metric_value', val_mock):
+            foo = pdr.get_dashboard_metrics(pdb_mock)
         assert pdb_mock.metric.call_count == 17
+        assert val_mock.call_count == 17
         assert isinstance(foo, dict)
 
     def test_exception(self):
@@ -402,6 +406,24 @@ class Test_main:
 
     def test_default(self):
         """ as default as possible, one test """
+        data = {'Fri 06/06': {'foo': 'bar'},
+                'Tue 06/10': {'foo': 'bar'},
+                'Thu 06/05': {'foo': 'bar'},
+                'Wed 06/04': {'foo': 'bar'},
+                'Sun 06/08': {'foo': 'bar'},
+                'Sat 06/07': {'foo': 'bar'},
+                'Mon 06/09': {'foo': 'bar'}
+                }
+
+        dates = ['Tue 06/10',
+                 'Mon 06/09',
+                 'Sun 06/08',
+                 'Sat 06/07',
+                 'Fri 06/06',
+                 'Thu 06/05',
+                 'Wed 06/04'
+                 ]
+
         pdb_mock = mock.MagicMock(spec='pypuppetdb.api.v3.API')
         connect_mock = mock.MagicMock()
         connect_mock.return_value = pdb_mock
@@ -434,14 +456,8 @@ class Test_main:
 
         assert format_html_mock.call_count == 1
         assert format_html_mock.call_args == mock.call('foobar',
-                                                       {'Fri 06/06': {'foo': 'bar'},
-                                                        'Tue 06/10': {'foo': 'bar'},
-                                                        'Thu 06/05': {'foo': 'bar'},
-                                                        'Wed 06/04': {'foo': 'bar'},
-                                                        'Sun 06/08': {'foo': 'bar'},
-                                                        'Sat 06/07': {'foo': 'bar'},
-                                                        'Mon 06/09': {'foo': 'bar'}
-                                                        },
+                                                       dates,
+                                                       data,
                                                        FakeDatetime(2014, 6, 10, 23, 59, 59),
                                                        FakeDatetime(2014, 6, 3, 23, 59, 59)
                                                        )
@@ -507,9 +523,13 @@ class Test_query_data_for_timespan:
 
 class Test_metric_value:
 
-    def test_flat(self):
+    def test_float(self):
         result = pdr.metric_value({'Value': 1234567.89123456789})
         assert result == '1,234,567.891235'
+
+    def test_int(self):
+        result = pdr.metric_value({'Value': 123.00000})
+        assert result == 123
 
     def test_float_zero(self):
         result = pdr.metric_value({'Value': 0.0})
@@ -555,7 +575,12 @@ class Test_send_mail:
 
 class Test_format_html:
 
+    strip_whitespace_re = re.compile(r'\s+')
+
     def test_basic(self):
+        data = {'foo': 'bar'}
+        dates = []
+
         env_mock = mock.MagicMock(spec=Environment, autospec=True)
         env_obj_mock = mock.MagicMock(spec=Environment, autospec=True)
         tmpl_mock = mock.MagicMock(spec=Template, autospec=True)
@@ -566,7 +591,8 @@ class Test_format_html:
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.Environment', env_mock):
             with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.PackageLoader', pl_mock):
                 html = pdr.format_html('foo.example.com',
-                                       {'foo': 'bar'},
+                                       dates,
+                                       data,
                                        datetime.datetime(2014, 06, 3, 0, 0, 0),
                                        datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
                                        )
@@ -577,6 +603,7 @@ class Test_format_html:
         assert env_obj_mock.get_template.call_args == mock.call('base.html')
         assert tmpl_mock.render.call_count == 1
         assert tmpl_mock.render.call_args == mock.call(data={'foo': 'bar'},
+                                                       dates=[],
                                                        hostname='foo.example.com',
                                                        start=datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0),
                                                        end=datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
@@ -584,10 +611,59 @@ class Test_format_html:
         assert html == 'baz'
 
     def test_body(self):
+        data = {'Fri 06/06': {'foo': 'bar'},
+                'Tue 06/10': {'foo': 'bar'},
+                'Thu 06/05': {'foo': 'bar'},
+                'Wed 06/04': {'foo': 'bar'},
+                'Sun 06/08': {'foo': 'bar'},
+                'Sat 06/07': {'foo': 'bar'},
+                'Mon 06/09': {'foo': 'bar'}
+                }
+
+        dates = ['Tue 06/10',
+                 'Mon 06/09',
+                 'Sun 06/08',
+                 'Sat 06/07',
+                 'Fri 06/06',
+                 'Thu 06/05',
+                 'Wed 06/04'
+                 ]
         html = pdr.format_html('foo.example.com',
-                               {'foo': 'bar'},
+                               dates,
+                               data,
                                datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0),
                                datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
                                )
         assert '<html>' in html
         assert '<h1>daily puppet(db) run summary on foo.example.com for Tue Jun 03, 2014 to Tue Jun 10</h1>' in html
+
+    def test_metrics(self):
+        data = {'Tue 06/10': {'metrics': {'foo': {'formatted': 'foo1'}, 'bar': {'formatted': 'bar1'}, 'baz': {'formatted': 'baz1'}}},
+                'Mon 06/09': {'metrics': {'foo': {'formatted': 'foo2'}, 'bar': {'formatted': 'bar2'}, 'baz': {'formatted': 'baz2'}}},
+                'Sun 06/08': {'metrics': {'foo': {'formatted': 'foo3'}, 'bar': {'formatted': 'bar3'}, 'baz': {'formatted': 'baz3'}}},
+                'Sat 06/07': {'metrics': {'foo': {'formatted': 'foo4'}, 'bar': {'formatted': 'bar4'}, 'baz': {'formatted': 'baz4'}}},
+                'Fri 06/06': {'metrics': {'foo': {'formatted': 'foo5'}, 'bar': {'formatted': 'bar5'}, 'baz': {'formatted': 'baz5'}}},
+                'Thu 06/05': {'metrics': {'foo': {'formatted': 'foo6'}, 'bar': {'formatted': 'bar6'}, 'baz': {'formatted': 'baz6'}}},
+                'Wed 06/04': {'foo': 'bar'},
+                }
+
+        dates = ['Tue 06/10',
+                 'Mon 06/09',
+                 'Sun 06/08',
+                 'Sat 06/07',
+                 'Fri 06/06',
+                 'Thu 06/05',
+                 'Wed 06/04'
+                 ]
+        html = pdr.format_html('foo.example.com',
+                               dates,
+                               data,
+                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0),
+                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                               )
+        stripped = self.strip_whitespace_re.sub('', html)
+        assert '<html>' in html
+        assert '<tr><th>Metric</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
+        assert '<tr><th>bar</th><td>' in stripped
+        assert '<tr><th>baz</th><td>' in stripped
+        assert '<tr><th>foo</th><td>foo1</td><td>foo2</td><td>foo3</td><td>foo4</td><td>foo5</td><td>foo6</td><td>&nbsp;</td></tr>' in stripped

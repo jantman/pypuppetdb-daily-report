@@ -41,6 +41,7 @@ import requests
 import datetime
 import anyjson
 import os
+from math import floor, ceil
 from jinja2 import Environment, PackageLoader
 
 FORMAT = "[%(levelname)s %(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
@@ -71,28 +72,33 @@ def main(hostname, num_days=7, cache_dir=None, dry_run=False):
     date_data = {}
     start_date = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - datetime.timedelta(seconds=1)
     end_date = start_date - datetime.timedelta(days=num_days)
+    dates = []
     for query_date in (start_date - datetime.timedelta(n) for n in range(num_days)):
         end = query_date
         start = query_date.replace(hour=0, minute=0, second=0, microsecond=0)
         date_s = query_date.strftime('%a %m/%d')
         date_data[date_s] = get_data_for_timespan(pdb, start, end, cache_dir=cache_dir)
-    html = format_html(hostname, date_data, start_date, end_date)
+        dates.append(date_s)
+    html = format_html(hostname, dates, date_data, start_date, end_date)
     send_mail(html, dry_run=dry_run)
     return True
 
 
-def format_html(hostname, date_data, start_date, end_date):
+def format_html(hostname, dates, date_data, start_date, end_date):
     """
     format the HTML report using the raw per-date dicts
 
     :param hostname: PuppetDB hostname
     :type hostname: string
+    :param dates: ordered list of dates to display, left-to-right
+    :type dates: list
     :param date_data: dict of each date to its data
     :type date_data: dict
     """
     env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
     template = env.get_template('base.html')
     html = template.render(data=date_data,
+                           dates=dates,
                            hostname=hostname,
                            start=start_date,
                            end=end_date
@@ -173,29 +179,30 @@ def get_dashboard_metrics(pdb):
     """
     logger.debug("getting dashboard metrics...")
     metrics = {}
-    metrics['Nodes'] = {'path': 'com.puppetlabs.puppetdb.query.population:type=default,name=num-nodes', 'order': 2, 'value': None}
-    metrics['Resources'] = {'path': 'com.puppetlabs.puppetdb.query.population:type=default,name=num-resources', 'order': 3, 'value': None}
-    metrics['Resource Duplication'] = {'path': 'com.puppetlabs.puppetdb.query.population:type=default,name=pct-resource-dupes', 'order': 4, 'value': None}
-    metrics['Catalog duplication'] = {'path': 'com.puppetlabs.puppetdb.scf.storage:type=default,name=duplicate-pct', 'order': 5, 'value': None}
-    metrics['Command Queue'] = {'path': 'org.apache.activemq:BrokerName=localhost,Type=Queue,Destination=com.puppetlabs.puppetdb.commands', 'order': 6, 'value': None}
-    metrics['Command Processing Time'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=processing-time', 'order': 7, 'value': None}
-    metrics['Command Processing'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=processed', 'order': 8, 'value': None}
-    metrics['Processed'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=processed', 'order': 9, 'value': None}
-    metrics['Retired'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=retried', 'order': 10, 'value': None}
-    metrics['Discarded'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=discarded', 'order': 11, 'value': None}
-    metrics['Rejected'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=fatal', 'order': 12, 'value': None}
-    metrics['Enqueueing'] = {'path': 'com.puppetlabs.puppetdb.http.server:type=/v2/commands,name=service-time', 'order': 13, 'value': None}
-    metrics['Collection Queries'] = {'path': 'com.puppetlabs.puppetdb.http.server:type=/v2/resources,name=service-time', 'order': 14, 'value': None}
-    metrics['DB Compaction'] = {'path': 'com.puppetlabs.puppetdb.scf.storage:type=default,name=gc-time', 'order': 15, 'value': None}
-    metrics['DLO Compression'] = {'path': 'com.puppetlabs.puppetdb.command.dlo:type=global,name=compression', 'order': 16, 'value': None}
-    metrics['DLO Size on Disk'] = {'path': 'com.puppetlabs.puppetdb.command.dlo:type=global,name=filesize', 'order': 17, 'value': None}
-    metrics['Discarded Messages'] = {'path': 'com.puppetlabs.puppetdb.command.dlo:type=global,name=messages', 'order': 18, 'value': None}
+    metrics['Nodes'] = {'path': 'com.puppetlabs.puppetdb.query.population:type=default,name=num-nodes', 'order': 2, 'formatted': None}
+    metrics['Resources'] = {'path': 'com.puppetlabs.puppetdb.query.population:type=default,name=num-resources', 'order': 3, 'formatted': None}
+    metrics['Resource Duplication'] = {'path': 'com.puppetlabs.puppetdb.query.population:type=default,name=pct-resource-dupes', 'order': 4, 'formatted': None}
+    metrics['Catalog duplication'] = {'path': 'com.puppetlabs.puppetdb.scf.storage:type=default,name=duplicate-pct', 'order': 5, 'formatted': None}
+    metrics['Command Queue'] = {'path': 'org.apache.activemq:BrokerName=localhost,Type=Queue,Destination=com.puppetlabs.puppetdb.commands', 'order': 6, 'formatted': None}
+    metrics['Command Processing Time'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=processing-time', 'order': 7, 'formatted': None}
+    metrics['Command Processing'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=processed', 'order': 8, 'formatted': None}
+    metrics['Processed'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=processed', 'order': 9, 'formatted': None}
+    metrics['Retired'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=retried', 'order': 10, 'formatted': None}
+    metrics['Discarded'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=discarded', 'order': 11, 'formatted': None}
+    metrics['Rejected'] = {'path': 'com.puppetlabs.puppetdb.command:type=global,name=fatal', 'order': 12, 'formatted': None}
+    metrics['Enqueueing'] = {'path': 'com.puppetlabs.puppetdb.http.server:type=/v2/commands,name=service-time', 'order': 13, 'formatted': None}
+    metrics['Collection Queries'] = {'path': 'com.puppetlabs.puppetdb.http.server:type=/v2/resources,name=service-time', 'order': 14, 'formatted': None}
+    metrics['DB Compaction'] = {'path': 'com.puppetlabs.puppetdb.scf.storage:type=default,name=gc-time', 'order': 15, 'formatted': None}
+    metrics['DLO Compression'] = {'path': 'com.puppetlabs.puppetdb.command.dlo:type=global,name=compression', 'order': 16, 'formatted': None}
+    metrics['DLO Size on Disk'] = {'path': 'com.puppetlabs.puppetdb.command.dlo:type=global,name=filesize', 'order': 17, 'formatted': None}
+    metrics['Discarded Messages'] = {'path': 'com.puppetlabs.puppetdb.command.dlo:type=global,name=messages', 'order': 18, 'formatted': None}
 
     for metric in metrics:
         logger.debug("getting metric: %s" % metric)
         try:
             metrics[metric]['api_response'] = pdb.metric(metrics[metric]['path'])
-            logger.debug("got raw value: %s" % metrics[metric]['value'])
+            metrics[metric]['formatted'] = metric_value(metrics[metric]['api_response'])
+            logger.debug("got raw value: %s" % metrics[metric]['formatted'])
         except requests.exceptions.HTTPError:
             logger.debug("unable to get value for metric: %s" % metric)
     logger.info("got dashboard metrics")
@@ -210,6 +217,8 @@ def metric_value(m):
     if 'Value' in m:
         if m['Value'] == 0.0:
             return "0"
+        if ceil(m['Value']) == floor(m['Value']):
+            return int(m['Value'])
         return "{:,f}".format(m['Value'])
     if 'MeanRate' in m and 'Count' in m:
         return "{:,f} ({:d})".format(m['MeanRate'], m['Count'])
@@ -240,6 +249,9 @@ def send_mail(html, dry_run=False):
     """
     if dry_run:
         logger.info("would have sent: {body}".format(body=html))
+        with open('debug.html', 'w') as fh:
+            fh.write(html)
+        print("DEBUG - wrote to debug.html")
     else:
         logger.debug("sending mail")
     return True
