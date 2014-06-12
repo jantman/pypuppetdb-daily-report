@@ -228,7 +228,7 @@ class Test_get_dashboard_metrics:
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
             foo = pdr.get_dashboard_metrics(pdb_mock)
         assert pdb_mock.metric.call_count == 17
-        assert logger_mock.debug.call_args == mock.call("unable to get value for metric: Catalog duplication")
+        assert mock.call("unable to get value for metric: Catalog duplication") in logger_mock.debug.call_args_list
 
 class Test_get_data_for_timespan:
 
