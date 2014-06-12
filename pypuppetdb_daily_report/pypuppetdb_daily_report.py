@@ -90,21 +90,32 @@ def get_data_for_timespan(pdb, start, end, cache_dir=None):
     :param cache_dir: absolute path to where to cache data from PuppetDB
     :type cache_dir: string
     """
+    logger.debug("getting data for timespan: {start} to {end} (cache_dir={cache_dir})".format(cache_dir=cache_dir,
+                                                                                              start=start.strftime('%Y-%m-%d_%H-%M-%S'),
+                                                                                              end=end.strftime('%Y-%m-%d_%H-%M-%S'),
+                                                                                              ))
     if cache_dir is not None:
         cache_filename = "data_{start}_{end}.json".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
                                                           end=end.strftime('%Y-%m-%d_%H-%M-%S'))
         cache_fpath = os.path.join(cache_dir, cache_filename)
+        logger.debug("cache file: {fpath}".format(fpath=cache_fpath))
         if not os.path.exists(cache_dir):
+            logger.info("creating dir: {cache_dir}".format(cache_dir=cache_dir))
             os.makedirs(cache_dir)
         if os.path.exists(cache_fpath):
             with open(cache_fpath, 'r') as fh:
+                logger.debug("reading cache file")
                 raw = fh.read()
             data = anyjson.deserialize(raw)
+            logger.info("returning cached data for timespan: {start} to {end}".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
+                                                                                      end=end.strftime('%Y-%m-%d_%H-%M-%S'),
+                                                                                      ))
             return data
     data = query_data_for_timespan(pdb, start, end)
     if cache_dir is None:
         return data
     with open(cache_fpath, 'w') as fh:
+        logger.debug("writing data to cache")
         fh.write(anyjson.serialize(data))
     return data
 
@@ -116,10 +127,14 @@ def query_data_for_timespan(pdb, start, end):
     :param pdb: object representing a connected pypuppetdb instance
     :type pdb: one of the pypuppetdb.API classes
     """
+    logger.info("querying data for timespan: {start} to {end}".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
+                                                                      end=end.strftime('%Y-%m-%d_%H-%M-%S'),
+                                                                      ))
     res = {}
+    logger.debug("querying nodes")
     nodes = pdb.nodes()
     res['nodes'] = [n.name for n in nodes]
-    print(res)
+    logger.debug("got {num} nodes".format(num=len(res['nodes'])))
     return res
 
 
