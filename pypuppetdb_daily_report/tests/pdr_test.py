@@ -372,4 +372,52 @@ class Test_query_data_for_timespan:
 
     def test_simple(self):
         """ simple test """
-        assert 1 == 2
+        foo = pdr.query_data_for_timespan(None, 1, 0)
+        assert 1 == "not implemented yet"
+
+
+class Test_metric_value:
+
+    def test_flat(self):
+        result = pdr.metric_value({'Value': 1234567.89123456789})
+        assert result == '1,234,567.891235'
+
+    def test_float_zero(self):
+        result = pdr.metric_value({'Value': 0.0})
+        assert result == '0'
+
+    def test_meanrate_count(self):
+        result = pdr.metric_value({'MeanRate': 1234567.89123456789, 'Count': 1234})
+        assert result == '1,234,567.891235 (1234)'
+
+    def test_meanrate(self):
+        result = pdr.metric_value({'MeanRate': 1234567.89123456789})
+        assert result == '1,234,567.891235'
+
+    def test_other(self):
+        result = pdr.metric_value({'Foo': 'bar'})
+        assert result == {'Foo': 'bar'}
+
+class Test_send_mail:
+
+    def test_dry_run(self):
+        logger_mock = mock.MagicMock()
+
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
+            result = pdr.send_mail('foo bar baz', dry_run=True)
+
+        assert result == True
+        assert logger_mock.debug.call_count == 0
+        assert logger_mock.info.call_count == 1
+        assert logger_mock.info.call_args == mock.call('would have sent: foo bar baz')
+
+    def test_send(self):
+        logger_mock = mock.MagicMock()
+
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
+            result = pdr.send_mail('foo bar baz')
+
+        assert result == True
+        assert logger_mock.debug.call_count == 1
+        assert logger_mock.debug.call_args == mock.call('sending mail')
+        assert logger_mock.info.call_count == 0

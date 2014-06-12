@@ -192,7 +192,7 @@ def send_mail(body, dry_run=False):
     :type dry_run: boolean
     """
     if dry_run:
-        logger.info("would have sent:")
+        logger.info("would have sent: {body}".format(body=body))
     else:
         logger.debug("sending mail")
     return True
@@ -232,10 +232,9 @@ def console_entry_point():
     elif opts.verbose > 0:
         logger.setLevel(logging.INFO)
 
-    if opts:
-        if not opts.host:
-            raise SystemExit("ERROR: you must specify the PuppetDB hostname with -p|--puppetdb")
-        main(opts.host, num_days=opts.num_days, dry_run=opts.dry_run, cache_dir=opts.cache_dir)
+    if not opts.host:
+        raise SystemExit("ERROR: you must specify the PuppetDB hostname with -p|--puppetdb")
+    main(opts.host, num_days=opts.num_days, dry_run=opts.dry_run, cache_dir=opts.cache_dir)
 
 
 if __name__ == "__main__":
