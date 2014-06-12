@@ -695,3 +695,24 @@ class Test_format_html:
         assert '<tr><th>bar</th><td>' in stripped
         assert '<tr><th>baz</th><td>' in stripped
         assert '<tr><th>foo</th><td>foo1</td><td>foo2</td><td>foo3</td><td>foo4</td><td>foo5</td><td>foo6</td><td>&nbsp;</td></tr>' in stripped
+
+    def test_facts(self):
+        data = {'Tue 06/10': {'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100, 'facterversion': {'2.0.0': 102, '1.7.2': 1}}}}}
+
+        dates = ['Tue 06/10',
+                 'Mon 06/09',
+                 'Sun 06/08',
+                 'Sat 06/07',
+                 'Fri 06/06',
+                 'Thu 06/05',
+                 'Wed 06/04'
+                 ]
+        html = pdr.format_html('foo.example.com',
+                               dates,
+                               data,
+                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0),
+                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                               )
+        stripped = self.strip_whitespace_re.sub('', html)
+        assert '<html>' in html
+        assert '<h2>Fact Values</h2>' in html
