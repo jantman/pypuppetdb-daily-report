@@ -66,9 +66,6 @@ def main(hostname, num_days=7, cache_dir=None, dry_run=False):
     """
     pdb = connect(host=hostname)
 
-    # snapshot of PuppetDB metrics from the dashboard
-    metrics = get_dashboard_metrics(pdb)
-
     # essentially figure out all these for yesterday, build the tables, serialize the result as JSON somewhere. then just keep the last ~7 days json files
     date_data = {}
     start_date = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - datetime.timedelta(seconds=1)
@@ -77,7 +74,18 @@ def main(hostname, num_days=7, cache_dir=None, dry_run=False):
         start = query_date.replace(hour=0, minute=0, second=0, microsecond=0)
         date_s = query_date.strftime('%a %m/%d')
         date_data[date_s] = get_data_for_timespan(pdb, start, end, cache_dir=cache_dir)
+    html = format_html(date_data)
     return True
+
+
+def format_html(date_data):
+    """
+    format the HTML report using the raw per-date dicts
+
+    :param date_data: dict of each date to its data
+    :type date_data: dict
+    """
+    return ""
 
 
 def get_data_for_timespan(pdb, start, end, cache_dir=None):
@@ -135,6 +143,12 @@ def query_data_for_timespan(pdb, start, end):
     nodes = pdb.nodes()
     res['nodes'] = [n.name for n in nodes]
     logger.debug("got {num} nodes".format(num=len(res['nodes'])))
+
+    # if we're getting for yesterday, also snapshot dashboard metrics
+    if end >= datetime.datetime.now() - datetime.timedelta(days=1):
+        logger.debug("requested yesterday, getting dashboard metrics")
+        res['metrics'] = get_dashboard_metrics(pdb)
+
     return res
 
 

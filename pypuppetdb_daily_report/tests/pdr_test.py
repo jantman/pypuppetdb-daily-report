@@ -404,18 +404,27 @@ class Test_main:
         pdb_mock = mock.MagicMock(spec='pypuppetdb.api.v3.API')
         connect_mock = mock.MagicMock()
         connect_mock.return_value = pdb_mock
-        get_metrics_mock = mock.MagicMock()
+        format_html_mock = mock.MagicMock()
+        format_html_mock.return_value = 'foo bar baz'
+
         dft_mock = mock.MagicMock()
+        dft_mock.return_value = {'foo': 'bar'}
         with freeze_time("2014-06-11 08:15:43"):
             with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.connect', connect_mock):
-                with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_dashboard_metrics', get_metrics_mock):
-                    with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_data_for_timespan', dft_mock):
+                with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_data_for_timespan', dft_mock):
+                    with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.format_html', format_html_mock):
                         pdr.main('foobar')
         assert connect_mock.call_count == 1
         assert connect_mock.call_args == mock.call(host='foobar')
-
-        assert get_metrics_mock.call_count == 1
-        assert get_metrics_mock.call_args == mock.call(pdb_mock)
+        assert format_html_mock.call_count == 1
+        assert format_html_mock.call_args == mock.call({'Fri 06/06': {'foo': 'bar'},
+                                                        'Tue 06/10': {'foo': 'bar'},
+                                                        'Thu 06/05': {'foo': 'bar'},
+                                                        'Wed 06/04': {'foo': 'bar'},
+                                                        'Sun 06/08': {'foo': 'bar'},
+                                                        'Sat 06/07': {'foo': 'bar'},
+                                                        'Mon 06/09': {'foo': 'bar'}
+                                                        })
 
         assert dft_mock.call_count == 7
         dft_expected = [
@@ -432,8 +441,8 @@ class Test_main:
 
 class Test_query_data_for_timespan:
 
-    def test_simple(self):
-        """ simple test of default code path """
+    def test_yesterday(self):
+        """ simple test of default code path, checking for yesterday's date """
         node1 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
         node1.name = u'node1'
         node2 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
@@ -443,16 +452,47 @@ class Test_query_data_for_timespan:
         pdb_mock = mock.MagicMock(spec=pypuppetdb.api.v3.API, autospec=True)
         pdb_mock.nodes.return_value = iter([node1, node2, node3])
         logger_mock = mock.MagicMock()
+        get_metrics_mock = mock.MagicMock()
 
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
-            foo = pdr.query_data_for_timespan(pdb_mock,
-                                              datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
-                                              datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
-                                              )
+            with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_dashboard_metrics', get_metrics_mock):
+                with freeze_time("2014-06-11 08:15:43"):
+                    foo = pdr.query_data_for_timespan(pdb_mock,
+                                                      datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
+                                                      datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                                                      )
+        assert pdb_mock.nodes.call_count == 1
+        assert foo['nodes'] == ['node1', 'node2', 'node3']
+        assert logger_mock.debug.call_count == 3
+        assert logger_mock.info.call_count == 1
+        assert get_metrics_mock.call_count == 1
+        assert get_metrics_mock.call_args == mock.call(pdb_mock)
+
+    def test_before_yesterday(self):
+        """ simple test of default code path, checking for yesterday's date """
+        node1 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
+        node1.name = u'node1'
+        node2 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
+        node2.name = u'node2'
+        node3 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
+        node3.name = u'node3'
+        pdb_mock = mock.MagicMock(spec=pypuppetdb.api.v3.API, autospec=True)
+        pdb_mock.nodes.return_value = iter([node1, node2, node3])
+        logger_mock = mock.MagicMock()
+        get_metrics_mock = mock.MagicMock()
+
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
+            with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_dashboard_metrics', get_metrics_mock):
+                with freeze_time("2014-06-11 08:15:43"):
+                    foo = pdr.query_data_for_timespan(pdb_mock,
+                                                      datetime.datetime(2014, 06, 7, hour=0, minute=0, second=0),
+                                                      datetime.datetime(2014, 06, 7, hour=23, minute=59, second=59)
+                                                      )
         assert pdb_mock.nodes.call_count == 1
         assert foo['nodes'] == ['node1', 'node2', 'node3']
         assert logger_mock.debug.call_count == 2
         assert logger_mock.info.call_count == 1
+        assert get_metrics_mock.call_count == 0
 
 
 class Test_metric_value:
