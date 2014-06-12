@@ -500,11 +500,15 @@ class Test_metric_value:
 
     def test_meanrate_count(self):
         result = pdr.metric_value({'MeanRate': 1234567.89123456789, 'Count': 1234})
-        assert result == '1,234,567.891235 (1234)'
+        assert result == '1,234,567.891235/s (1234)'
 
     def test_meanrate(self):
         result = pdr.metric_value({'MeanRate': 1234567.89123456789})
-        assert result == '1,234,567.891235'
+        assert result == '1,234,567.891235/s'
+
+    def test_AverageEnqueueTime(self):
+        result = pdr.metric_value({'AverageEnqueueTime': 1234567.89123456789})
+        assert result == '1,234,567.891235/s'
 
     def test_other(self):
         result = pdr.metric_value({'Foo': 'bar'})

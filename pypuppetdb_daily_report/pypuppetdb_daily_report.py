@@ -238,9 +238,11 @@ def metric_value(m):
             return int(m['Value'])
         return "{:,f}".format(m['Value'])
     if 'MeanRate' in m and 'Count' in m:
-        return "{:,f} ({:d})".format(m['MeanRate'], m['Count'])
+        return "{:,f}/s ({:d})".format(m['MeanRate'], m['Count'])
     if 'MeanRate' in m:
-        return "{:,f}".format(m['MeanRate'])
+        return "{:,f}/s".format(m['MeanRate'])
+    if 'AverageEnqueueTime' in m:
+        return "{:,f}/s".format(m['AverageEnqueueTime'])
     """
     # metrics requiring special handling/formatting:
     jvmheap = pdb.metric('java.lang:type=Memory')
