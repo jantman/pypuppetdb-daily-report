@@ -406,6 +406,7 @@ class Test_main:
         connect_mock.return_value = pdb_mock
         format_html_mock = mock.MagicMock()
         format_html_mock.return_value = 'foo bar baz'
+        send_mail_mock = mock.MagicMock()
 
         dft_mock = mock.MagicMock()
         dft_mock.return_value = {'foo': 'bar'}
@@ -413,18 +414,10 @@ class Test_main:
             with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.connect', connect_mock):
                 with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_data_for_timespan', dft_mock):
                     with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.format_html', format_html_mock):
-                        pdr.main('foobar')
+                        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.send_mail', send_mail_mock):
+                            pdr.main('foobar')
         assert connect_mock.call_count == 1
         assert connect_mock.call_args == mock.call(host='foobar')
-        assert format_html_mock.call_count == 1
-        assert format_html_mock.call_args == mock.call({'Fri 06/06': {'foo': 'bar'},
-                                                        'Tue 06/10': {'foo': 'bar'},
-                                                        'Thu 06/05': {'foo': 'bar'},
-                                                        'Wed 06/04': {'foo': 'bar'},
-                                                        'Sun 06/08': {'foo': 'bar'},
-                                                        'Sat 06/07': {'foo': 'bar'},
-                                                        'Mon 06/09': {'foo': 'bar'}
-                                                        })
 
         assert dft_mock.call_count == 7
         dft_expected = [
@@ -437,6 +430,18 @@ class Test_main:
             mock.call(pdb_mock, FakeDatetime(2014, 06, 4, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 4, hour=23, minute=59, second=59), cache_dir=None),
         ]
         assert dft_mock.mock_calls == dft_expected
+
+        assert format_html_mock.call_count == 1
+        assert format_html_mock.call_args == mock.call({'Fri 06/06': {'foo': 'bar'},
+                                                        'Tue 06/10': {'foo': 'bar'},
+                                                        'Thu 06/05': {'foo': 'bar'},
+                                                        'Wed 06/04': {'foo': 'bar'},
+                                                        'Sun 06/08': {'foo': 'bar'},
+                                                        'Sat 06/07': {'foo': 'bar'},
+                                                        'Mon 06/09': {'foo': 'bar'}
+                                                        })
+        assert send_mail_mock.call_count == 1
+        assert send_mail_mock.call_args == mock.call('foo bar baz', dry_run=False)
 
 
 class Test_query_data_for_timespan:
@@ -541,3 +546,9 @@ class Test_send_mail:
         assert logger_mock.debug.call_count == 1
         assert logger_mock.debug.call_args == mock.call('sending mail')
         assert logger_mock.info.call_count == 0
+
+
+class Test_format_html:
+
+    def test_basic(self):
+        pass

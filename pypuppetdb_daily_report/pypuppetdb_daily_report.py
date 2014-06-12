@@ -75,6 +75,7 @@ def main(hostname, num_days=7, cache_dir=None, dry_run=False):
         date_s = query_date.strftime('%a %m/%d')
         date_data[date_s] = get_data_for_timespan(pdb, start, end, cache_dir=cache_dir)
     html = format_html(date_data)
+    send_mail(html, dry_run=dry_run)
     return True
 
 
@@ -217,17 +218,17 @@ def metric_value(m):
     return m
 
 
-def send_mail(body, dry_run=False):
+def send_mail(html, dry_run=False):
     """
     Send the message
 
-    :param body: body of the message to send
-    :type body: string
+    :param html: HTML to make up the body of the message
+    :type html: string
     :param dry_run: whether to actually send, or just print what would be sent
     :type dry_run: boolean
     """
     if dry_run:
-        logger.info("would have sent: {body}".format(body=body))
+        logger.info("would have sent: {body}".format(body=html))
     else:
         logger.debug("sending mail")
     return True
