@@ -51,6 +51,7 @@ logger = logging.getLogger(__name__)
 # these will probably be made configurable in the future
 TOP_MODULES_COUNT = 10
 TOP_RESOURCES_COUNT = 10
+FACTS = ['puppetversion', 'facterversion', 'lsbdistdescription']
 
 
 def main(hostname, num_days=7, cache_dir=None, dry_run=False):
@@ -157,15 +158,31 @@ def query_data_for_timespan(pdb, start, end):
                                                                       end=end.strftime('%Y-%m-%d_%H-%M-%S'),
                                                                       ))
     res = {}
-    logger.debug("querying nodes")
-    nodes = pdb.nodes()
-    res['nodes'] = [n.name for n in nodes]
-    logger.debug("got {num} nodes".format(num=len(res['nodes'])))
 
     # if we're getting for yesterday, also snapshot dashboard metrics
     if end >= datetime.datetime.now() - datetime.timedelta(days=1):
         logger.debug("requested yesterday, getting dashboard metrics")
         res['metrics'] = get_dashboard_metrics(pdb)
+
+    logger.debug("querying facts")
+    res['facts'] = {}
+    for fact in FACTS:
+        res['facts'][fact] = {}
+        fact_vals = pdb.facts(fact)
+        for val in fact_vals:
+            if val.value not in res['facts'][fact]:
+                res['facts'][fact][val.value] = 0
+            res['facts'][fact][val.value] += 1
+    logger.debug("done with facts")
+
+    logger.debug("querying nodes")
+    nodes = pdb.nodes()
+    res['nodes'] = []
+    for node in nodes:
+        logger.debug("working node {node}".format(node=node.name))
+        res['nodes'].append(node.name)
+
+    logger.debug("got {num} nodes".format(num=len(res['nodes'])))
 
     return res
 
