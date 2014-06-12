@@ -41,6 +41,7 @@ import requests
 import datetime
 import anyjson
 import os
+from jinja2 import Environment, PackageLoader
 
 FORMAT = "[%(levelname)s %(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
 logging.basicConfig(level=logging.ERROR, format=FORMAT)
@@ -69,24 +70,34 @@ def main(hostname, num_days=7, cache_dir=None, dry_run=False):
     # essentially figure out all these for yesterday, build the tables, serialize the result as JSON somewhere. then just keep the last ~7 days json files
     date_data = {}
     start_date = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - datetime.timedelta(seconds=1)
+    end_date = start_date - datetime.timedelta(days=num_days)
     for query_date in (start_date - datetime.timedelta(n) for n in range(num_days)):
         end = query_date
         start = query_date.replace(hour=0, minute=0, second=0, microsecond=0)
         date_s = query_date.strftime('%a %m/%d')
         date_data[date_s] = get_data_for_timespan(pdb, start, end, cache_dir=cache_dir)
-    html = format_html(date_data)
+    html = format_html(hostname, date_data, start_date, end_date)
     send_mail(html, dry_run=dry_run)
     return True
 
 
-def format_html(date_data):
+def format_html(hostname, date_data, start_date, end_date):
     """
     format the HTML report using the raw per-date dicts
 
+    :param hostname: PuppetDB hostname
+    :type hostname: string
     :param date_data: dict of each date to its data
     :type date_data: dict
     """
-    return ""
+    env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
+    template = env.get_template('base.html')
+    html = template.render(data=date_data,
+                           hostname=hostname,
+                           start=start_date,
+                           end=end_date
+                           )
+    return html
 
 
 def get_data_for_timespan(pdb, start, end, cache_dir=None):

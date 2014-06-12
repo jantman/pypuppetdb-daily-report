@@ -36,6 +36,7 @@ from freezegun import freeze_time
 from freezegun.api import FakeDatetime
 from requests.exceptions import HTTPError
 import pypuppetdb
+from jinja2 import Environment, PackageLoader, Template
 
 from pypuppetdb_daily_report import pypuppetdb_daily_report as pdr
 
@@ -432,14 +433,18 @@ class Test_main:
         assert dft_mock.mock_calls == dft_expected
 
         assert format_html_mock.call_count == 1
-        assert format_html_mock.call_args == mock.call({'Fri 06/06': {'foo': 'bar'},
+        assert format_html_mock.call_args == mock.call('foobar',
+                                                       {'Fri 06/06': {'foo': 'bar'},
                                                         'Tue 06/10': {'foo': 'bar'},
                                                         'Thu 06/05': {'foo': 'bar'},
                                                         'Wed 06/04': {'foo': 'bar'},
                                                         'Sun 06/08': {'foo': 'bar'},
                                                         'Sat 06/07': {'foo': 'bar'},
                                                         'Mon 06/09': {'foo': 'bar'}
-                                                        })
+                                                        },
+                                                       FakeDatetime(2014, 6, 10, 23, 59, 59),
+                                                       FakeDatetime(2014, 6, 3, 23, 59, 59)
+                                                       )
         assert send_mail_mock.call_count == 1
         assert send_mail_mock.call_args == mock.call('foo bar baz', dry_run=False)
 
@@ -551,4 +556,38 @@ class Test_send_mail:
 class Test_format_html:
 
     def test_basic(self):
-        pass
+        env_mock = mock.MagicMock(spec=Environment, autospec=True)
+        env_obj_mock = mock.MagicMock(spec=Environment, autospec=True)
+        tmpl_mock = mock.MagicMock(spec=Template, autospec=True)
+        tmpl_mock.render.return_value = 'baz'
+        env_obj_mock.get_template.return_value = tmpl_mock
+        env_mock.return_value = env_obj_mock
+        pl_mock = mock.MagicMock(spec=PackageLoader, autospec=True)
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.Environment', env_mock):
+            with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.PackageLoader', pl_mock):
+                html = pdr.format_html('foo.example.com',
+                                       {'foo': 'bar'},
+                                       datetime.datetime(2014, 06, 3, 0, 0, 0),
+                                       datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                                       )
+        assert env_mock.call_count == 1
+        assert pl_mock.call_count == 1
+        assert pl_mock.call_args == mock.call('pypuppetdb_daily_report', 'templates')
+        assert env_obj_mock.get_template.call_count == 1
+        assert env_obj_mock.get_template.call_args == mock.call('base.html')
+        assert tmpl_mock.render.call_count == 1
+        assert tmpl_mock.render.call_args == mock.call(data={'foo': 'bar'},
+                                                       hostname='foo.example.com',
+                                                       start=datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0),
+                                                       end=datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                                                       )
+        assert html == 'baz'
+
+    def test_body(self):
+        html = pdr.format_html('foo.example.com',
+                               {'foo': 'bar'},
+                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0),
+                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                               )
+        assert '<html>' in html
+        assert '<h1>daily puppet(db) run summary on foo.example.com for Tue Jun 03, 2014 to Tue Jun 10</h1>' in html

@@ -2,7 +2,7 @@ from setuptools import setup
 from sys import version_info
 from pypuppetdb_daily_report import VERSION
 
-pyver_requires = ['pypuppetdb>=0.1.0, <=1.0.0', 'anyjson>=0.3.0, <=1.0.0']
+pyver_requires = ['pypuppetdb>=0.1.0, <=1.0.0', 'anyjson>=0.3.0, <=1.0.0', 'Jinja2>=2.7.0, <=2.8.0']
 
 with open('README.rst') as file:
     long_description = file.read()
@@ -24,6 +24,7 @@ setup(
     author='Jason Antman',
     author_email='jason@jasonantman.com',
     packages=['pypuppetdb_daily_report', 'pypuppetdb_daily_report.tests'],
+    package_data={'pypuppetdb_daily_report': ['templates/*.html']},
     entry_points="""
     [console_scripts]
     pypuppetdb_daily_report = pypuppetdb_daily_report.pypuppetdb_daily_report:console_entry_point
