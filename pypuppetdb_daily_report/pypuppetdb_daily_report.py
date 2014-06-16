@@ -249,6 +249,9 @@ def query_data_for_node(pdb, node, start, end):
     res = {}
 
     res['reports'] = {'run_count': 0,
+                      'with_failures': 0,
+                      'with_changes': 0,
+                      'with_skips': 0,
                       'run_time_total': datetime.timedelta(),
                       'run_time_max': datetime.timedelta()
                       }
@@ -257,6 +260,7 @@ def query_data_for_node(pdb, node, start, end):
             continue
         if rep.start < start:
             # reports are returned sorted desc by completion time of run
+            logger.debug("found last report - start time is {s}".format(s=rep.start))
             break
         res['reports']['run_count'] += 1
         res['reports']['run_time_total'] = res['reports']['run_time_total'] + rep.run_time
@@ -265,8 +269,13 @@ def query_data_for_node(pdb, node, start, end):
         query_s = '["=", "report", "{hash_}"]'.format(hash_=rep.hash_)
         events = pdb.event_counts(query_s, summarize_by='certname')
         for e in events:
-            print(e)
-        # raise SystemExit()
+            if e['skips'] > 0:
+                res['reports']['with_skips'] += 1
+            if e['successes'] > 0:
+                res['reports']['with_changes'] += 1
+            if e['failures'] > 0:
+                res['reports']['with_failures'] += 1
+        print(res['reports'])
 
     logger.debug("got {num} reports for node".format(num=len(res['reports'])))
 

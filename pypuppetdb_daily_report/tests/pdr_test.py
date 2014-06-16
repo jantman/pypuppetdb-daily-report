@@ -737,7 +737,7 @@ class Test_query_data_for_node:
                                           end
                                           )
         assert node_mock.reports.call_count == 1
-        assert logger_mock.debug.call_count == 2
+        assert logger_mock.debug.call_count == 3
         assert foo['reports']['run_count'] == 4
         assert foo['reports']['run_time_total'] == datetime.timedelta(seconds=1111)
         assert foo['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
@@ -750,13 +750,28 @@ class Test_query_data_for_node:
     def test_iterate_events(self):
         """ test iterating over events """
         pdb_mock = mock.MagicMock(spec=pypuppetdb.api.v3.API, autospec=True)
+        logger_mock = mock.MagicMock()
         node_mock = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
         node_mock.name = 'node1.example.com'
-        logger_mock = mock.MagicMock()
-        node_mock.reports.return_value = [self.r5]
+        r1 = mock.MagicMock()
+        r1.start = datetime.datetime(2014, 06, 10, hour=5, minute=0, second=2, tzinfo=pytz.utc)
+        r1.run_time = datetime.timedelta(seconds=1000)
+        r1.hash_ = 'hash1'
+        r2 = mock.MagicMock()
+        r2.start = datetime.datetime(2014, 06, 10, hour=5, minute=10, second=2, tzinfo=pytz.utc)
+        r2.run_time = datetime.timedelta(seconds=10)
+        r2.hash_ = 'hash2'
+        node_mock.reports.return_value = [r1, r2]
+        pdb_mock.event_counts.return_value = [{u'noops': 4,
+                                               u'skips': 3,
+                                               u'successes': 1,
+                                               u'subject-type': u'certname',
+                                               u'failures': 2,
+                                               u'subject': {u'title': u'node1.example.com'}}
+                                              ]
 
-        start = datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0, tzinfo=pytz.timezone('US/Eastern'))
-        end = datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.timezone('US/Eastern'))
+        start = datetime.datetime(2014, 06, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc)
+        end = datetime.datetime(2014, 06, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc)
 
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
             foo = pdr.query_data_for_node(pdb_mock,
@@ -766,11 +781,17 @@ class Test_query_data_for_node:
                                           )
         assert node_mock.reports.call_count == 1
         assert logger_mock.debug.call_count == 2
-        assert foo['reports']['run_count'] == 1
-        assert foo['reports']['run_time_total'] == datetime.timedelta(seconds=1000)
+        assert foo['reports']['run_count'] == 2
+        assert foo['reports']['run_time_total'] == datetime.timedelta(seconds=1010)
         assert foo['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
-        assert pdb_mock.event_counts.call_args_list == [mock.call('["=", "report", "hash5"]', summarize_by='certname')]
-        # foo
+        assert pdb_mock.event_counts.call_count == 2
+        assert pdb_mock.event_counts.call_args_list == [mock.call('["=", "report", "hash1"]', summarize_by='certname'),
+                                                        mock.call('["=", "report", "hash2"]', summarize_by='certname'),
+                                                        ]
+        print(logger_mock.debug.call_args_list)
+        assert foo['reports']['with_failures'] == 2
+        assert foo['reports']['with_changes'] == 2
+        assert foo['reports']['with_skips'] == 2
 
 
 class Test_get_facts:
