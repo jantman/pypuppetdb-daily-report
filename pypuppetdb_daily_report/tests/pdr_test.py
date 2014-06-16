@@ -556,6 +556,7 @@ class Test_query_data_for_timespan:
         get_metrics_mock = mock.MagicMock()
         query_node_mock = mock.MagicMock()
         query_node_mock.return_value = {'foo': 'bar'}
+        get_facts_mock = mock.MagicMock()
 
         start = datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0)
         end = datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
@@ -563,6 +564,7 @@ class Test_query_data_for_timespan:
         with nested(
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_dashboard_metrics', get_metrics_mock),
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_facts', get_facts_mock),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_node', query_node_mock),
                 freeze_time("2014-06-11 08:15:43")
         ):
@@ -576,10 +578,12 @@ class Test_query_data_for_timespan:
                                 'node2': {'reports': {'foo': 'bar'}},
                                 'node3': {'reports': {'foo': 'bar'}}
                                 }
-        assert logger_mock.debug.call_count == 8
+        assert logger_mock.debug.call_count == 6
         assert logger_mock.info.call_count == 1
         assert get_metrics_mock.call_count == 1
         assert get_metrics_mock.call_args == mock.call(pdb_mock)
+        assert get_facts_mock.call_count == 1
+        assert get_facts_mock.call_args == mock.call(pdb_mock)
         assert query_node_mock.call_count == 3
         assert query_node_mock.call_args_list == [mock.call(pdb_mock, node1, start, end),
                                                   mock.call(pdb_mock, node2, start, end),
@@ -598,6 +602,7 @@ class Test_query_data_for_timespan:
         pdb_mock.nodes.return_value = iter([node1, node2, node3])
         logger_mock = mock.MagicMock()
         get_metrics_mock = mock.MagicMock()
+        get_facts_mock = mock.MagicMock()
         query_node_mock = mock.MagicMock()
         query_node_mock.return_value = {'foo': 'bar'}
 
@@ -607,6 +612,7 @@ class Test_query_data_for_timespan:
         with nested(
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_dashboard_metrics', get_metrics_mock),
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_facts', get_facts_mock),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_node', query_node_mock),
                 freeze_time("2014-06-11 08:15:43")
         ):
@@ -619,9 +625,10 @@ class Test_query_data_for_timespan:
                                 'node2': {'reports': {'foo': 'bar'}},
                                 'node3': {'reports': {'foo': 'bar'}}
                                 }
-        assert logger_mock.debug.call_count == 7
+        assert logger_mock.debug.call_count == 5
         assert logger_mock.info.call_count == 1
         assert get_metrics_mock.call_count == 0
+        assert get_facts_mock.call_count == 0
         assert query_node_mock.call_count == 3
         assert query_node_mock.call_args_list == [mock.call(pdb_mock, node1, start, end),
                                                   mock.call(pdb_mock, node2, start, end),

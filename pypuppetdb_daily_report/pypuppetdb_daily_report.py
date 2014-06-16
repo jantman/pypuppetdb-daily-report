@@ -175,17 +175,7 @@ def query_data_for_timespan(pdb, start, end):
     if end >= datetime.datetime.now() - datetime.timedelta(days=1):
         logger.debug("requested yesterday, getting dashboard metrics")
         res['metrics'] = get_dashboard_metrics(pdb)
-
-    logger.debug("querying facts")
-    res['facts'] = {}
-    for fact in FACTS:
-        res['facts'][fact] = {}
-        fact_vals = pdb.facts(fact)
-        for val in fact_vals:
-            if val.value not in res['facts'][fact]:
-                res['facts'][fact][val.value] = 0
-            res['facts'][fact][val.value] += 1
-    logger.debug("done with facts")
+        res['facts'] = get_facts(pdb)
 
     logger.debug("querying nodes")
     nodes = pdb.nodes()
@@ -197,6 +187,26 @@ def query_data_for_timespan(pdb, start, end):
 
     logger.debug("got {num} nodes".format(num=len(res['nodes'])))
 
+    return res
+
+
+def get_facts(pdb):
+    """
+    return a dict of the values of the facts in FACTS and the counts of each value
+
+    :param pdb: object representing a connected pypuppetdb instance
+    :type pdb: one of the pypuppetdb.API classes
+    """
+    logger.debug("querying facts")
+    res = {}
+    for fact in FACTS:
+        res[fact] = {}
+        fact_vals = pdb.facts(fact)
+        for val in fact_vals:
+            if val.value not in res[fact]:
+                res[fact][val.value] = 0
+            res[fact][val.value] += 1
+    logger.debug("done with facts")
     return res
 
 
