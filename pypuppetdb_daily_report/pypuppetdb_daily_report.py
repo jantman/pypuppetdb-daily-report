@@ -252,11 +252,6 @@ def query_data_for_node(pdb, node, start, end):
                       'run_time_max': datetime.timedelta()
                       }
     for rep in node.reports():
-        print(end)
-        print(rep.start)
-        print(rep.run_time)
-        print(type(rep.run_time))
-        print(dir(pdb))
         if rep.start > end:
             continue
         if rep.start < start:
@@ -266,7 +261,11 @@ def query_data_for_node(pdb, node, start, end):
         res['reports']['run_time_total'] = res['reports']['run_time_total'] + rep.run_time
         if rep.run_time > res['reports']['run_time_max']:
             res['reports']['run_time_max'] = rep.run_time
-        # now need to query events or event_counts for rep.hash_
+        query_s = '["=", "report", "{hash_}"]'.format(hash_=rep.hash_)
+        events = pdb.event_counts(query_s, summarize_by='certname')
+        for e in events:
+            print(e)
+        raise SystemExit()
 
     logger.debug("got {num} reports for node".format(num=len(res['reports'])))
 

@@ -428,7 +428,7 @@ class Test_get_data_for_timespan:
 class Test_main:
     """ tests for main() function """
 
-    @pytest.mark.skipif(1 == 1, reason='date stuff broken; come back to it')
+    @pytest.mark.skipif(1 == 1, reason='date stuff broken; come back to it')  # TODO
     def test_default(self):
         """ as default as possible, one test """
         data = {'Fri 06/06': {'foo': 'bar'},
@@ -510,7 +510,7 @@ class Test_main:
 class Test_get_date_list:
     """ tests for main() function """
 
-    @pytest.mark.skipif(1 == 1, reason='date stuff broken; come back to it')
+    @pytest.mark.skipif(1 == 1, reason='date stuff broken; come back to it')  # TODO
     def test_simple(self):
         """ as default as possible, one test """
         logger_mock = mock.MagicMock()
@@ -688,27 +688,36 @@ class Test_query_data_for_node:
     r1 = mock.MagicMock()
     r1.start = datetime.datetime(2014, 06, 11, hour=5, minute=50, second=0, tzinfo=pytz.utc)
     r1.run_time = datetime.timedelta(seconds=4000)
+    r1.hash_ = 'hash1'
     r2 = mock.MagicMock()
     r2.start = datetime.datetime(2014, 06, 11, hour=5, minute=9, second=0, tzinfo=pytz.utc)
     r2.run_time = datetime.timedelta(seconds=100)
+    r2.hash_ = 'hash2'
+    # start what should return
     r3 = mock.MagicMock()
     r3.start = datetime.datetime(2014, 06, 11, hour=4, minute=55, second=0, tzinfo=pytz.utc)
     r3.run_time = datetime.timedelta(seconds=1)
+    r3.hash_ = 'hash3'
     r4 = mock.MagicMock()
     r4.start = datetime.datetime(2014, 06, 10, hour=17, minute=0, second=0, tzinfo=pytz.utc)
     r4.run_time = datetime.timedelta(seconds=100)
+    r4.hash_ = 'hash4'
     r5 = mock.MagicMock()
     r5.start = datetime.datetime(2014, 06, 10, hour=5, minute=0, second=2, tzinfo=pytz.utc)
     r5.run_time = datetime.timedelta(seconds=1000)
+    r5.hash_ = 'hash5'
     r6 = mock.MagicMock()
     r6.start = datetime.datetime(2014, 06, 10, hour=4, minute=59, second=55, tzinfo=pytz.utc)
     r6.run_time = datetime.timedelta(seconds=10)
+    r6.hash_ = 'hash6'
+    # end what should return
     r7 = mock.MagicMock()
     r7.start = datetime.datetime(2014, 06, 9, hour=17, minute=50, second=0, tzinfo=pytz.utc)
     r7.run_time = datetime.timedelta(seconds=2000)
+    r7.hash_ = 'hash7'
     reports = [r1, r2, r3, r4, r5, r6, r7]
 
-    def test_basic(self):
+    def test_iterate_reports(self):
         """ simple test of default code path """
         pdb_mock = mock.MagicMock(spec=pypuppetdb.api.v3.API, autospec=True)
         node_mock = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
@@ -730,6 +739,36 @@ class Test_query_data_for_node:
         assert foo['reports']['run_count'] == 4
         assert foo['reports']['run_time_total'] == datetime.timedelta(seconds=1111)
         assert foo['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
+        assert pdb_mock.event_counts.call_args_list == [mock.call('["=", "report", "hash3"]', summarize_by='certname'),
+                                                        mock.call('["=", "report", "hash4"]', summarize_by='certname'),
+                                                        mock.call('["=", "report", "hash5"]', summarize_by='certname'),
+                                                        mock.call('["=", "report", "hash6"]', summarize_by='certname')
+                                                        ]
+
+    def test_iterate_events(self):
+        """ test iterating over events """
+        pdb_mock = mock.MagicMock(spec=pypuppetdb.api.v3.API, autospec=True)
+        node_mock = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
+        node_mock.name = 'node1.example.com'
+        logger_mock = mock.MagicMock()
+        node_mock.reports.return_value = [self.r5]
+
+        start = datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0, tzinfo=pytz.timezone('US/Eastern'))
+        end = datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.timezone('US/Eastern'))
+
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
+            foo = pdr.query_data_for_node(pdb_mock,
+                                          node_mock,
+                                          start,
+                                          end
+                                          )
+        assert node_mock.reports.call_count == 1
+        assert logger_mock.debug.call_count == 2
+        assert foo['reports']['run_count'] == 1
+        assert foo['reports']['run_time_total'] == datetime.timedelta(seconds=1000)
+        assert foo['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
+        assert pdb_mock.event_counts.call_args_list == [mock.call('["=", "report", "hash5"]', summarize_by='certname')]
+        # foo
 
 
 class Test_get_facts:
