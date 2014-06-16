@@ -59,6 +59,11 @@ class OptionsObject(object):
         self.cache_dir = '/tmp/.pypuppetdb_daily_report'
 
 
+class FactObject(object):
+    """ object to mock a Fact """
+    def __init__(self, value):
+        self.value = value
+
 class Test_parse_args:
     """
     Tests the CLI option/argument handling
@@ -634,6 +639,48 @@ class Test_query_data_for_timespan:
                                                   mock.call(pdb_mock, node2, start, end),
                                                   mock.call(pdb_mock, node3, start, end)
                                                   ]
+
+
+class Test_get_facts:
+
+    def test_get_facts(self):
+        """ defaults """
+        def fact_getter(name):
+            if name == 'puppetversion':
+                return [FactObject('a'),
+                        FactObject('a'),
+                        FactObject('a'),
+                        FactObject('b'),
+                        FactObject('b'),
+                        FactObject('c')
+                        ]
+            if name == 'facterversion':
+                return [FactObject('one'),
+                        FactObject('two'),
+                        FactObject('two')
+                        ]
+            if name == 'lsbdistdescription':
+                return [FactObject('1'),
+                        FactObject('1'),
+                        FactObject('1'),
+                        FactObject('1'),
+                        FactObject('2'),
+                        FactObject('3'),
+                        FactObject('4'),
+                        FactObject('5')
+                        ]
+            return []
+        expected = {'puppetversion': {'a': 3, 'b': 2, 'c': 1},
+                    'facterversion': {'one': 1, 'two': 2},
+                    'lsbdistdescription': {'1': 4, '2': 1, '3': 1, '4': 1, '5': 1}
+                    }
+
+        pdb_mock = mock.MagicMock()
+        pdb_mock.facts.side_effect=fact_getter
+        foo = pdr.get_facts(pdb_mock)
+        assert pdb_mock.facts.call_count == 3
+        assert isinstance(foo, dict)
+        assert foo == expected
 
 
 class Test_format_html:
