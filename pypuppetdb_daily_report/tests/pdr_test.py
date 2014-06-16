@@ -510,7 +510,6 @@ class Test_main:
 class Test_get_date_list:
     """ tests for main() function """
 
-    @pytest.mark.skipif(1 == 1, reason='date stuff broken; come back to it')  # TODO
     def test_simple(self):
         """ as default as possible, one test """
         logger_mock = mock.MagicMock()
@@ -522,7 +521,7 @@ class Test_get_date_list:
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock),
                 mock.patch('tzlocal.get_localzone', localzone_mock)
         ):
-            dates = pdr.get_date_list(3)
+            dates = pdr.get_date_list(7)
 
         assert logger_mock.debug.call_args_list == [mock.call('local_start_date=2014-06-10 23:59:59-0400 (1402459199)'),
                                                     mock.call('start_date=2014-06-11 03:59:59+0000 (1402459199)'),

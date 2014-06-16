@@ -93,7 +93,7 @@ def get_date_list(num_days):
     DateTime objects to report on.
     """
     local_tz = tzlocal.get_localzone()
-    local_start_date = datetime.datetime.now(local_tz).replace(hour=0, minute=0, second=0, microsecond=0) - datetime.timedelta(seconds=1)
+    local_start_date = local_tz.localize(datetime.datetime.now()).replace(hour=0, minute=0, second=0, microsecond=0) - datetime.timedelta(seconds=1)
     logger.debug("local_start_date={d}".format(d=local_start_date.strftime('%Y-%m-%d %H:%M:%S%z (%s)')))
     start_date = local_start_date.astimezone(pytz.utc)
     logger.debug("start_date={d}".format(d=start_date.strftime('%Y-%m-%d %H:%M:%S%z (%s)')))
@@ -265,7 +265,7 @@ def query_data_for_node(pdb, node, start, end):
         events = pdb.event_counts(query_s, summarize_by='certname')
         for e in events:
             print(e)
-        raise SystemExit()
+        # raise SystemExit()
 
     logger.debug("got {num} reports for node".format(num=len(res['reports'])))
 
