@@ -4,9 +4,9 @@
 <tr><th>Fact</th><th>Value</th><th>Count</th></tr>
 {% for fact in data[dates[0]].facts|dictsort %}
   <tr>
-  <th rowspan="{{ data[dates[0]].facts[fact]|length }}">{{ fact }}</th>
+  <th rowspan="{{ fact[1]|length }}">{{ fact[0] }}</th>
   {% set nextrow = False %}
-  {% for val in data[dates[0]].facts[fact]|dictsort(false, 'value') %}
+  {% for val in fact[1]|dictsort %}
     {% if nextrow %}<tr>{% endif %}
     <td>{{ val[0] }}</td><td>{{ val[1] }}</td>
     {% set nextrow = True %}
