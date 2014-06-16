@@ -178,9 +178,30 @@ def query_data_for_timespan(pdb, start, end):
     logger.debug("querying nodes")
     nodes = pdb.nodes()
     res['nodes'] = []
+    res['reports'] = {}
     for node in nodes:
         logger.debug("working node {node}".format(node=node.name))
         res['nodes'].append(node.name)
+        # get node reports
+        res['reports'][node.name] = {'run_count': 0,
+                                     'run_time_total': 0,
+                                     'run_time_max': 0
+                                     }
+        for rep in node.reports():
+            print(end)
+            print(rep.start)
+            if rep.start > end:
+                continue
+            if rep.start < start:
+                # reports are returned sorted desc by completion time of run
+                break
+            res['reports'][node.name]['run_count'] += 1
+            res['reports'][node.name]['run_time_total'] += rep.run_time
+            if rep.run_time > res['reports'][node.name]['run_time_max']:
+                res['reports'][node.name]['run_time_max'] = rep.run_time
+            # now need to query events or event_counts for rep.hash_
+            print(dir(pdb))
+            raise SystemExit()
 
     logger.debug("got {num} nodes".format(num=len(res['nodes'])))
 
