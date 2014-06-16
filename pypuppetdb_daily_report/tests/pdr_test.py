@@ -544,41 +544,47 @@ class Test_query_data_for_timespan:
 
     def test_yesterday(self):
         """ simple test of default code path, checking for yesterday's date """
-        report_returns = ['hello', 'goodbye']
-        def report_se(*args):
-            return report_returns.pop(0)
-        report_mock = mock.MagicMock(side_effect=report_se)
-
         node1 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
         node1.name = u'node1'
-        node1.reports.return_value = report_mock
         node2 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
         node2.name = u'node2'
-        node2.reports.return_value = report_mock
         node3 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
         node3.name = u'node3'
-        node3.reports.return_value = report_mock
         pdb_mock = mock.MagicMock(spec=pypuppetdb.api.v3.API, autospec=True)
         pdb_mock.nodes.return_value = iter([node1, node2, node3])
         logger_mock = mock.MagicMock()
         get_metrics_mock = mock.MagicMock()
+        query_node_mock = mock.MagicMock()
+        query_node_mock.return_value = {'foo': 'bar'}
+
+        start = datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0)
+        end = datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
 
         with nested(
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_dashboard_metrics', get_metrics_mock),
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_node', query_node_mock),
                 freeze_time("2014-06-11 08:15:43")
         ):
                     foo = pdr.query_data_for_timespan(pdb_mock,
-                                                      datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
-                                                      datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                                                      start,
+                                                      end
                                                       )
         # assert 1 == "todo - mock pdb.facts()"
         assert pdb_mock.nodes.call_count == 1
-        assert foo['nodes'] == ['node1', 'node2', 'node3']
+        assert foo['nodes'] == {'node1': {'reports': {'foo': 'bar'}},
+                                'node2': {'reports': {'foo': 'bar'}},
+                                'node3': {'reports': {'foo': 'bar'}}
+                                }
         assert logger_mock.debug.call_count == 8
         assert logger_mock.info.call_count == 1
         assert get_metrics_mock.call_count == 1
         assert get_metrics_mock.call_args == mock.call(pdb_mock)
+        assert query_node_mock.call_count == 3
+        assert query_node_mock.call_args_list == [mock.call(pdb_mock, node1, start, end),
+                                                  mock.call(pdb_mock, node2, start, end),
+                                                  mock.call(pdb_mock, node3, start, end)
+                                                  ]
 
     def test_before_yesterday(self):
         """ simple test of default code path, checking for yesterday's date """
@@ -592,21 +598,35 @@ class Test_query_data_for_timespan:
         pdb_mock.nodes.return_value = iter([node1, node2, node3])
         logger_mock = mock.MagicMock()
         get_metrics_mock = mock.MagicMock()
+        query_node_mock = mock.MagicMock()
+        query_node_mock.return_value = {'foo': 'bar'}
+
+        start = datetime.datetime(2014, 06, 7, hour=0, minute=0, second=0)
+        end = datetime.datetime(2014, 06, 7, hour=23, minute=59, second=59)
 
         with nested(
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_dashboard_metrics', get_metrics_mock),
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_node', query_node_mock),
                 freeze_time("2014-06-11 08:15:43")
         ):
             foo = pdr.query_data_for_timespan(pdb_mock,
-                                              datetime.datetime(2014, 06, 7, hour=0, minute=0, second=0),
-                                              datetime.datetime(2014, 06, 7, hour=23, minute=59, second=59)
+                                              start,
+                                              end
                                               )
         assert pdb_mock.nodes.call_count == 1
-        assert foo['nodes'] == ['node1', 'node2', 'node3']
+        assert foo['nodes'] == {'node1': {'reports': {'foo': 'bar'}},
+                                'node2': {'reports': {'foo': 'bar'}},
+                                'node3': {'reports': {'foo': 'bar'}}
+                                }
         assert logger_mock.debug.call_count == 7
         assert logger_mock.info.call_count == 1
         assert get_metrics_mock.call_count == 0
+        assert query_node_mock.call_count == 3
+        assert query_node_mock.call_args_list == [mock.call(pdb_mock, node1, start, end),
+                                                  mock.call(pdb_mock, node2, start, end),
+                                                  mock.call(pdb_mock, node3, start, end)
+                                                  ]
 
 
 class Test_format_html:

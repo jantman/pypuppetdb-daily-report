@@ -95,6 +95,10 @@ def format_html(hostname, dates, date_data, start_date, end_date):
     :type dates: list
     :param date_data: dict of each date to its data
     :type date_data: dict
+    :param start_date: beginning of time period that data is for
+    :type start_date: Datetime
+    :param end_date: end of time period that data is for
+    :type end_date: Datetime
     """
     env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
     template = env.get_template('base.html')
@@ -114,6 +118,10 @@ def get_data_for_timespan(pdb, start, end, cache_dir=None):
 
     :param pdb: object representing a connected pypuppetdb instance
     :type pdb: one of the pypuppetdb.API classes
+    :param start: beginning of time period to get data for
+    :type start: Datetime
+    :param end: end of time period to get data for
+    :type end: Datetime
     :param cache_dir: absolute path to where to cache data from PuppetDB
     :type cache_dir: string
     """
@@ -153,6 +161,10 @@ def query_data_for_timespan(pdb, start, end):
 
     :param pdb: object representing a connected pypuppetdb instance
     :type pdb: one of the pypuppetdb.API classes
+    :param start: beginning of time period to get data for
+    :type start: Datetime
+    :param end: end of time period to get data for
+    :type end: Datetime
     """
     logger.info("querying data for timespan: {start} to {end}".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
                                                                       end=end.strftime('%Y-%m-%d_%H-%M-%S'),
@@ -177,33 +189,57 @@ def query_data_for_timespan(pdb, start, end):
 
     logger.debug("querying nodes")
     nodes = pdb.nodes()
-    res['nodes'] = []
-    res['reports'] = {}
+    res['nodes'] = {}
     for node in nodes:
         logger.debug("working node {node}".format(node=node.name))
-        res['nodes'].append(node.name)
-        # get node reports
-        res['reports'][node.name] = {'run_count': 0,
-                                     'run_time_total': 0,
-                                     'run_time_max': 0
-                                     }
-        for rep in node.reports():
-            print(end)
-            print(rep.start)
-            if rep.start > end:
-                continue
-            if rep.start < start:
-                # reports are returned sorted desc by completion time of run
-                break
-            res['reports'][node.name]['run_count'] += 1
-            res['reports'][node.name]['run_time_total'] += rep.run_time
-            if rep.run_time > res['reports'][node.name]['run_time_max']:
-                res['reports'][node.name]['run_time_max'] = rep.run_time
-            # now need to query events or event_counts for rep.hash_
-            print(dir(pdb))
-            raise SystemExit()
+        reports = query_data_for_node(pdb, node, start, end)
+        res['nodes'][node.name] = {'reports': reports}
 
     logger.debug("got {num} nodes".format(num=len(res['nodes'])))
+
+    return res
+
+
+def query_data_for_node(pdb, node, start, end):
+    """
+    Retrieve all desired data for a given node in a given time period
+
+    :param pdb: object representing a connected pypuppetdb instance
+    :type pdb: one of the pypuppetdb.API classes
+    :param node: the node to query for
+    :type node: pypuppetdb.types.Node
+    :param start: beginning of time period to get data for
+    :type start: Datetime
+    :param end: end of time period to get data for
+    :type end: Datetime
+    """
+    logger.info("querying node {name} for timespan: {start} to {end}".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
+                                                                             end=end.strftime('%Y-%m-%d_%H-%M-%S'),
+                                                                             name=node.name,
+                                                                             ))
+    res = {}
+
+    res['reports'] = {'run_count': 0,
+                      'run_time_total': 0,
+                      'run_time_max': 0
+                      }
+    for rep in node.reports():
+        print(end)
+        print(rep.start)
+        if rep.start > end:
+            continue
+        if rep.start < start:
+            # reports are returned sorted desc by completion time of run
+            break
+        res['reports'][node.name]['run_count'] += 1
+        res['reports'][node.name]['run_time_total'] += rep.run_time
+        if rep.run_time > res['reports'][node.name]['run_time_max']:
+            res['reports'][node.name]['run_time_max'] = rep.run_time
+        # now need to query events or event_counts for rep.hash_
+        print(dir(pdb))
+        raise SystemExit()
+
+    logger.debug("got {num} reports for node".format(num=len(res['reports'])))
 
     return res
 
