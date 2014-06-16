@@ -76,13 +76,14 @@ def main(hostname, num_days=7, cache_dir=None, dry_run=False):
     date_data = {}
     dates = []  # ordered
     date_list = get_date_list(num_days)
+    localtz = tzlocal.get_localzone()
     for query_date in date_list:
         end = query_date
-        start = query_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        date_s = query_date.strftime('%a %m/%d')
+        start = query_date - datetime.timedelta(days=1) + datetime.timedelta(seconds=1)
+        date_s = (query_date - datetime.timedelta(hours=1)).astimezone(localtz).strftime('%a %m/%d')
         date_data[date_s] = get_data_for_timespan(pdb, start, end, cache_dir=cache_dir)
         dates.append(date_s)
-    html = format_html(hostname, dates, date_data, date_list[0], date_list[-1])
+    html = format_html(hostname, dates, date_data, date_list[0], (date_list[-1] - datetime.timedelta(hours=23, minutes=59, seconds=59)))
     send_mail(html, dry_run=dry_run)
     return True
 
@@ -94,11 +95,11 @@ def get_date_list(num_days):
     """
     local_tz = tzlocal.get_localzone()
     local_start_date = local_tz.localize(datetime.datetime.now()).replace(hour=0, minute=0, second=0, microsecond=0) - datetime.timedelta(seconds=1)
-    logger.debug("local_start_date={d}".format(d=local_start_date.strftime('%Y-%m-%d %H:%M:%S%z (%s)')))
+    logger.debug("local_start_date={d}".format(d=local_start_date.strftime("%Y-%m-%d %H:%M:%S%z %Z")))
     start_date = local_start_date.astimezone(pytz.utc)
-    logger.debug("start_date={d}".format(d=start_date.strftime('%Y-%m-%d %H:%M:%S%z (%s)')))
+    logger.debug("start_date={d}".format(d=start_date.strftime("%Y-%m-%d %H:%M:%S%z %Z")))
     end_date = (start_date - datetime.timedelta(days=num_days)) + datetime.timedelta(seconds=1)
-    logger.debug("end_date={d}".format(d=end_date.strftime('%Y-%m-%d %H:%M:%S%z (%s)')))
+    logger.debug("end_date={d}".format(d=end_date.strftime("%Y-%m-%d %H:%M:%S%z %Z")))
     dates = [start_date - datetime.timedelta(n) for n in range(num_days)]
     return dates
 
