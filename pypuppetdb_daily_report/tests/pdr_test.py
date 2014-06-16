@@ -849,17 +849,60 @@ class Test_format_html:
              'Wed 06/04'
              ]
 
-    data = {'Tue 06/10': {'metrics': {'foo': {'formatted': 'foo1'}, 'bar': {'formatted': 'bar1'}, 'baz': {'formatted': 'baz1'}},
-                          'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100}, 'facterversion': {'2.0.0': 102, '1.7.2': 1}},
-                          'nodes': {},
-                          },
-            'Mon 06/09': {'metrics': {'foo': {'formatted': 'foo2'}, 'bar': {'formatted': 'bar2'}, 'baz': {'formatted': 'baz2'}}},
-            'Sun 06/08': {'metrics': {'foo': {'formatted': 'foo3'}, 'bar': {'formatted': 'bar3'}, 'baz': {'formatted': 'baz3'}}},
-            'Sat 06/07': {'metrics': {'foo': {'formatted': 'foo4'}, 'bar': {'formatted': 'bar4'}, 'baz': {'formatted': 'baz4'}}},
-            'Fri 06/06': {'metrics': {'foo': {'formatted': 'foo5'}, 'bar': {'formatted': 'bar5'}, 'baz': {'formatted': 'baz5'}}},
-            'Thu 06/05': {'metrics': {'foo': {'formatted': 'foo6'}, 'bar': {'formatted': 'bar6'}, 'baz': {'formatted': 'baz6'}}},
-            'Wed 06/04': {'foo': 'bar'},
-            }
+    data = {
+        'Tue 06/10': {
+            'metrics': {'foo': {'formatted': 'foo1'}, 'bar': {'formatted': 'bar1'}, 'baz': {'formatted': 'baz1'}},
+            'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100}, 'facterversion': {'2.0.0': 102, '1.7.2': 1}},
+            'nodes': {
+                'node1.example.com': {
+                    'reports': {
+                        'run_count': 2,
+                        'run_time_total': datetime.timedelta(seconds=1010),
+                        'run_time_max': datetime.timedelta(seconds=1000),
+                        'with_failures': 2,
+                        'with_changes': 2,
+                        'with_skips': 2,
+                    },
+                },
+                'node2.example.com': {
+                    'reports': {
+                        'run_count': 1,
+                        'run_time_total': datetime.timedelta(seconds=100),
+                        'run_time_max': datetime.timedelta(seconds=100),
+                        'with_failures': 1,
+                        'with_changes': 1,
+                        'with_skips': 1,
+                    },
+                },
+                'node2.example.com': {
+                    'reports': {
+                        'run_count': 1,
+                        'run_time_total': datetime.timedelta(seconds=500),
+                        'run_time_max': datetime.timedelta(seconds=500),
+                        'with_failures': 0,
+                        'with_changes': 1,
+                        'with_skips': 0,
+                    },
+                },
+                'node2.example.com': {
+                    'reports': {
+                        'run_count': 5,
+                        'run_time_total': datetime.timedelta(seconds=600),
+                        'run_time_max': datetime.timedelta(seconds=500),
+                        'with_failures': 5,
+                        'with_changes': 0,
+                        'with_skips': 0,
+                    },
+                },
+            },
+        },
+        'Mon 06/09': {'metrics': {'foo': {'formatted': 'foo2'}, 'bar': {'formatted': 'bar2'}, 'baz': {'formatted': 'baz2'}}},
+        'Sun 06/08': {'metrics': {'foo': {'formatted': 'foo3'}, 'bar': {'formatted': 'bar3'}, 'baz': {'formatted': 'baz3'}}},
+        'Sat 06/07': {'metrics': {'foo': {'formatted': 'foo4'}, 'bar': {'formatted': 'bar4'}, 'baz': {'formatted': 'baz4'}}},
+        'Fri 06/06': {'metrics': {'foo': {'formatted': 'foo5'}, 'bar': {'formatted': 'bar5'}, 'baz': {'formatted': 'baz5'}}},
+        'Thu 06/05': {'metrics': {'foo': {'formatted': 'foo6'}, 'bar': {'formatted': 'bar6'}, 'baz': {'formatted': 'baz6'}}},
+        'Wed 06/04': {'foo': 'bar'},
+    }
 
     def test_basic(self):
         env_mock = mock.MagicMock(spec=Environment, autospec=True)
@@ -874,8 +917,8 @@ class Test_format_html:
                 html = pdr.format_html('foo.example.com',
                                        self.dates,
                                        self.data,
-                                       datetime.datetime(2014, 06, 3, 0, 0, 0),
-                                       datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                                       datetime.datetime(2014, 06, 3, 0, 0, 0, tzinfo=pytz.utc),
+                                       datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
                                        )
         assert env_mock.call_count == 1
         assert pl_mock.call_count == 1
@@ -886,8 +929,8 @@ class Test_format_html:
         assert tmpl_mock.render.call_args == mock.call(data=self.data,
                                                        dates=self.dates,
                                                        hostname='foo.example.com',
-                                                       start=datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0),
-                                                       end=datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                                                       start=datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+                                                       end=datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
                                                        )
         assert html == 'baz'
 
@@ -895,8 +938,8 @@ class Test_format_html:
         html = pdr.format_html('foo.example.com',
                                self.dates,
                                self.data,
-                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0),
-                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
                                )
         assert '<html>' in html
         assert '<h1>daily puppet(db) run summary on foo.example.com for Tue Jun 03, 2014 to Tue Jun 10</h1>' in html
@@ -905,8 +948,8 @@ class Test_format_html:
         html = pdr.format_html('foo.example.com',
                                self.dates,
                                self.data,
-                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0),
-                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
                                )
         stripped = self.strip_whitespace_re.sub('', html)
         assert '<html>' in html
@@ -919,11 +962,29 @@ class Test_format_html:
         html = pdr.format_html('foo.example.com',
                                self.dates,
                                self.data,
-                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0),
-                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
                                )
         stripped = self.strip_whitespace_re.sub('', html)
         assert '<html>' in html
         assert '<h2>Fact Values</h2>' in html
         assert '<tr><th>Fact</th><th>Value</th><th>Count</th></tr>' in html
         assert '<tr><throwspan="2">facterversion</th><td>1.7.2</td><td>1</td></tr><tr><td>2.0.0</td><td>102</td></tr><tr><throwspan="3">puppetversion' in stripped
+
+    def test_run_overview(self):
+        html = pdr.format_html('foo.example.com',
+                               self.dates,
+                               self.data,
+                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+                               )
+        stripped = self.strip_whitespace_re.sub('', html)
+        assert '<html>' in html
+        assert '<h2>Report Overview</h2>' in html
+        assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
+        assert '<tr><th>Total Reports</th><td>9</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in html
+        assert '<tr><th>With Failures</th><td>8 (89%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in html
+        assert '<tr><th>With Changes</th><td>4 (44%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in html
+        assert '<tr><th>With Skipped Resources</th><td>3 (33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in html
+        assert '<tr><th>Average Runtime</th><td>4m 6s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in html
+        assert '<tr><th>Maximum Runtime</th><td>16m 40s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in html
