@@ -606,8 +606,8 @@ class Test_query_data_for_timespan:
         query_node_mock.return_value = {'foo': 'bar'}
         get_facts_mock = mock.MagicMock()
 
-        start = datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0)
-        end = datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+        start = datetime.datetime(2014, 06, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc)
+        end = datetime.datetime(2014, 06, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc)
 
         with nested(
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock),
@@ -654,8 +654,8 @@ class Test_query_data_for_timespan:
         query_node_mock = mock.MagicMock()
         query_node_mock.return_value = {'foo': 'bar'}
 
-        start = datetime.datetime(2014, 06, 7, hour=0, minute=0, second=0)
-        end = datetime.datetime(2014, 06, 7, hour=23, minute=59, second=59)
+        start = datetime.datetime(2014, 06, 7, hour=4, minute=0, second=0, tzinfo=pytz.utc)
+        end = datetime.datetime(2014, 06, 8, hour=3, minute=59, second=59, tzinfo=pytz.utc)
 
         with nested(
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock),
@@ -697,7 +697,7 @@ class Test_query_data_for_node:
     r2.hash_ = 'hash2'
     # start what should return
     r3 = mock.MagicMock()
-    r3.start = datetime.datetime(2014, 06, 11, hour=4, minute=55, second=0, tzinfo=pytz.utc)
+    r3.start = datetime.datetime(2014, 06, 11, hour=3, minute=55, second=0, tzinfo=pytz.utc)
     r3.run_time = datetime.timedelta(seconds=1)
     r3.hash_ = 'hash3'
     r4 = mock.MagicMock()
@@ -727,8 +727,8 @@ class Test_query_data_for_node:
         logger_mock = mock.MagicMock()
         node_mock.reports.return_value = self.reports
 
-        start = datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0, tzinfo=pytz.timezone('US/Eastern'))
-        end = datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.timezone('US/Eastern'))
+        start = datetime.datetime(2014, 06, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc)
+        end = datetime.datetime(2014, 06, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc)
 
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
             foo = pdr.query_data_for_node(pdb_mock,

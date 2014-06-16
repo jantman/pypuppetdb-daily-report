@@ -191,7 +191,7 @@ def query_data_for_timespan(pdb, start, end):
     res = {}
 
     # if we're getting for yesterday, also snapshot dashboard metrics
-    if end >= datetime.datetime.now() - datetime.timedelta(days=1):
+    if end >= pytz.utc.localize(datetime.datetime.now()) - datetime.timedelta(days=1):
         logger.debug("requested yesterday, getting dashboard metrics")
         res['metrics'] = get_dashboard_metrics(pdb)
         res['facts'] = get_facts(pdb)
