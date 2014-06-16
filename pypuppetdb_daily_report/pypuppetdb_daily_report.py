@@ -74,6 +74,24 @@ def main(hostname, num_days=7, cache_dir=None, dry_run=False):
 
     # essentially figure out all these for yesterday, build the tables, serialize the result as JSON somewhere. then just keep the last ~7 days json files
     date_data = {}
+    dates = []  # ordered
+    date_list = get_date_list(num_days)
+    for query_date in date_list:
+        end = query_date
+        start = query_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        date_s = query_date.strftime('%a %m/%d')
+        date_data[date_s] = get_data_for_timespan(pdb, start, end, cache_dir=cache_dir)
+        dates.append(date_s)
+    html = format_html(hostname, dates, date_data, date_list[0], date_list[-1])
+    send_mail(html, dry_run=dry_run)
+    return True
+
+
+def get_date_list(num_days):
+    """
+    For an integer number of days (num_days), get an ordered list of
+    DateTime objects to report on.
+    """
     local_tz = tzlocal.get_localzone()
     local_start_date = datetime.datetime.now(local_tz).replace(hour=0, minute=0, second=0, microsecond=0) - datetime.timedelta(seconds=1)
     logger.debug("local_start_date={d}".format(d=local_start_date.strftime('%Y-%m-%d %H:%M:%S%z (%s)')))
@@ -81,16 +99,8 @@ def main(hostname, num_days=7, cache_dir=None, dry_run=False):
     logger.debug("start_date={d}".format(d=start_date.strftime('%Y-%m-%d %H:%M:%S%z (%s)')))
     end_date = (start_date - datetime.timedelta(days=num_days)) + datetime.timedelta(seconds=1)
     logger.debug("end_date={d}".format(d=end_date.strftime('%Y-%m-%d %H:%M:%S%z (%s)')))
-    dates = []
-    for query_date in (start_date - datetime.timedelta(n) for n in range(num_days)):
-        end = query_date
-        start = query_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        date_s = query_date.strftime('%a %m/%d')
-        date_data[date_s] = get_data_for_timespan(pdb, start, end, cache_dir=cache_dir)
-        dates.append(date_s)
-    html = format_html(hostname, dates, date_data, start_date, end_date)
-    send_mail(html, dry_run=dry_run)
-    return True
+    dates = [start_date - datetime.timedelta(n) for n in range(num_days)]
+    return dates
 
 
 def format_html(hostname, dates, date_data, start_date, end_date):
