@@ -39,6 +39,7 @@ from requests.exceptions import HTTPError
 import pypuppetdb
 from jinja2 import Environment, PackageLoader, Template
 from contextlib import nested
+import pytz
 
 from pypuppetdb_daily_report import pypuppetdb_daily_report as pdr
 
@@ -63,6 +64,7 @@ class FactObject(object):
     """ object to mock a Fact """
     def __init__(self, value):
         self.value = value
+
 
 class Test_parse_args:
     """
@@ -452,29 +454,40 @@ class Test_main:
         format_html_mock = mock.MagicMock()
         format_html_mock.return_value = 'foo bar baz'
         send_mail_mock = mock.MagicMock()
+        logger_mock = mock.MagicMock()
+        localzone_mock = mock.MagicMock()
+        localzone_mock.return_value = pytz.timezone('US/Eastern')
 
         dft_mock = mock.MagicMock()
         dft_mock.return_value = {'foo': 'bar'}
         with nested(
-                freeze_time("2014-06-11 08:15:43"),
+                freeze_time("2014-06-11 08:15:43", tz_offset=-4),
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.connect', connect_mock),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_data_for_timespan', dft_mock),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.format_html', format_html_mock),
-                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.send_mail', send_mail_mock)
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.send_mail', send_mail_mock),
+                mock.patch('tzlocal.get_localzone', localzone_mock)
         ):
             pdr.main('foobar')
         assert connect_mock.call_count == 1
         assert connect_mock.call_args == mock.call(host='foobar')
 
+        assert logger_mock.debug.call_args_list == [mock.call('local_start_date=2014-06-10 23:59:59-0400 (1402459199)'),
+                                                    mock.call('start_date=2014-06-11 03:59:59+0000 (1402459199)'),
+                                                    mock.call('end_date=2014-06-04 04:00:00+0000 (1401854400)')
+                                                    ]
+
         assert dft_mock.call_count == 7
+        print(dft_mock.mock_calls)
         dft_expected = [
-            mock.call(pdb_mock, FakeDatetime(2014, 06, 10, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 10, hour=23, minute=59, second=59), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 06, 9, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 9, hour=23, minute=59, second=59), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 06, 8, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 8, hour=23, minute=59, second=59), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 06, 7, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 7, hour=23, minute=59, second=59), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 06, 6, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 6, hour=23, minute=59, second=59), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 06, 5, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 5, hour=23, minute=59, second=59), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 06, 4, hour=0, minute=0, second=0), FakeDatetime(2014, 06, 4, hour=23, minute=59, second=59), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 06, 10, hour=0, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 06, 9, hour=0, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 06, 9, hour=23, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 06, 8, hour=0, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 06, 8, hour=23, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 06, 7, hour=0, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 06, 7, hour=23, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 06, 6, hour=0, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 06, 6, hour=23, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 06, 5, hour=0, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 06, 5, hour=23, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 06, 4, hour=0, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 06, 4, hour=23, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
         ]
         assert dft_mock.mock_calls == dft_expected
 
@@ -641,6 +654,56 @@ class Test_query_data_for_timespan:
                                                   ]
 
 
+class Test_query_data_for_node:
+
+    # pypuppetdb datetimes are tz-aware, and appear to always be UTC
+    r1 = mock.MagicMock()
+    r1.start = datetime.datetime(2014, 06, 11, hour=5, minute=50, second=0, tzinfo=pytz.utc)
+    r1.run_time = datetime.timedelta(seconds=4000)
+    r2 = mock.MagicMock()
+    r2.start = datetime.datetime(2014, 06, 11, hour=5, minute=9, second=0, tzinfo=pytz.utc)
+    r2.run_time = datetime.timedelta(seconds=100)
+    r3 = mock.MagicMock()
+    r3.start = datetime.datetime(2014, 06, 11, hour=4, minute=55, second=0, tzinfo=pytz.utc)
+    r3.run_time = datetime.timedelta(seconds=1)
+    r4 = mock.MagicMock()
+    r4.start = datetime.datetime(2014, 06, 10, hour=17, minute=0, second=0, tzinfo=pytz.utc)
+    r4.run_time = datetime.timedelta(seconds=100)
+    r5 = mock.MagicMock()
+    r5.start = datetime.datetime(2014, 06, 10, hour=5, minute=0, second=2, tzinfo=pytz.utc)
+    r5.run_time = datetime.timedelta(seconds=1000)
+    r6 = mock.MagicMock()
+    r6.start = datetime.datetime(2014, 06, 10, hour=4, minute=59, second=55, tzinfo=pytz.utc)
+    r6.run_time = datetime.timedelta(seconds=10)
+    r7 = mock.MagicMock()
+    r7.start = datetime.datetime(2014, 06, 9, hour=17, minute=50, second=0, tzinfo=pytz.utc)
+    r7.run_time = datetime.timedelta(seconds=2000)
+    reports = [r1, r2, r3, r4, r5, r6, r7]
+
+    def test_basic(self):
+        """ simple test of default code path """
+        pdb_mock = mock.MagicMock(spec=pypuppetdb.api.v3.API, autospec=True)
+        node_mock = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
+        node_mock.name = 'node1.example.com'
+        logger_mock = mock.MagicMock()
+        node_mock.reports.return_value = self.reports
+
+        start = datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0, tzinfo=pytz.timezone('US/Eastern'))
+        end = datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.timezone('US/Eastern'))
+
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
+            foo = pdr.query_data_for_node(pdb_mock,
+                                          node_mock,
+                                          start,
+                                          end
+                                          )
+        assert node_mock.reports.call_count == 1
+        assert logger_mock.debug.call_count == 2
+        assert foo['reports']['run_count'] == 4
+        assert foo['reports']['run_time_total'] == datetime.timedelta(seconds=1111)
+        assert foo['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
+
+
 class Test_get_facts:
 
     def test_get_facts(self):
@@ -676,7 +739,7 @@ class Test_get_facts:
                     }
 
         pdb_mock = mock.MagicMock()
-        pdb_mock.facts.side_effect=fact_getter
+        pdb_mock.facts.side_effect = fact_getter
         foo = pdr.get_facts(pdb_mock)
         assert pdb_mock.facts.call_count == 3
         assert isinstance(foo, dict)

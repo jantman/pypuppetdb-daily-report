@@ -2,7 +2,12 @@ from setuptools import setup
 from sys import version_info
 from pypuppetdb_daily_report import VERSION
 
-pyver_requires = ['pypuppetdb>=0.1.0, <=1.0.0', 'anyjson>=0.3.0, <=1.0.0', 'Jinja2>=2.7.0, <=2.8.0']
+pyver_requires = ['pypuppetdb>=0.1.0, <=1.0.0',
+                  'anyjson>=0.3.0, <=1.0.0',
+                  'Jinja2>=2.7.0, <=2.8.0',
+                  'pytz',
+                  'tzlocal>=1.1., <=2.0.0'
+                  ]
 
 with open('README.rst') as file:
     long_description = file.read()

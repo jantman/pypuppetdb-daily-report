@@ -43,6 +43,9 @@ import anyjson
 import os
 from math import floor, ceil
 from jinja2 import Environment, PackageLoader
+import pytz
+import time
+import tzlocal
 
 FORMAT = "[%(levelname)s %(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
 logging.basicConfig(level=logging.ERROR, format=FORMAT)
@@ -71,8 +74,13 @@ def main(hostname, num_days=7, cache_dir=None, dry_run=False):
 
     # essentially figure out all these for yesterday, build the tables, serialize the result as JSON somewhere. then just keep the last ~7 days json files
     date_data = {}
-    start_date = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - datetime.timedelta(seconds=1)
-    end_date = start_date - datetime.timedelta(days=num_days)
+    local_tz = tzlocal.get_localzone()
+    local_start_date = datetime.datetime.now(local_tz).replace(hour=0, minute=0, second=0, microsecond=0) - datetime.timedelta(seconds=1)
+    logger.debug("local_start_date={d}".format(d=local_start_date.strftime('%Y-%m-%d %H:%M:%S%z (%s)')))
+    start_date = local_start_date.astimezone(pytz.utc)
+    logger.debug("start_date={d}".format(d=start_date.strftime('%Y-%m-%d %H:%M:%S%z (%s)')))
+    end_date = (start_date - datetime.timedelta(days=num_days)) + datetime.timedelta(seconds=1)
+    logger.debug("end_date={d}".format(d=end_date.strftime('%Y-%m-%d %H:%M:%S%z (%s)')))
     dates = []
     for query_date in (start_date - datetime.timedelta(n) for n in range(num_days)):
         end = query_date
@@ -223,31 +231,32 @@ def query_data_for_node(pdb, node, start, end):
     :param end: end of time period to get data for
     :type end: Datetime
     """
-    logger.info("querying node {name} for timespan: {start} to {end}".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
-                                                                             end=end.strftime('%Y-%m-%d_%H-%M-%S'),
-                                                                             name=node.name,
-                                                                             ))
+    logger.debug("querying node {name} for timespan: {start} to {end}".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
+                                                                              end=end.strftime('%Y-%m-%d_%H-%M-%S'),
+                                                                              name=node.name,
+                                                                              ))
     res = {}
 
     res['reports'] = {'run_count': 0,
-                      'run_time_total': 0,
-                      'run_time_max': 0
+                      'run_time_total': datetime.timedelta(),
+                      'run_time_max': datetime.timedelta()
                       }
     for rep in node.reports():
         print(end)
         print(rep.start)
+        print(rep.run_time)
+        print(type(rep.run_time))
+        print(dir(pdb))
         if rep.start > end:
             continue
         if rep.start < start:
             # reports are returned sorted desc by completion time of run
             break
-        res['reports'][node.name]['run_count'] += 1
-        res['reports'][node.name]['run_time_total'] += rep.run_time
-        if rep.run_time > res['reports'][node.name]['run_time_max']:
-            res['reports'][node.name]['run_time_max'] = rep.run_time
+        res['reports']['run_count'] += 1
+        res['reports']['run_time_total'] = res['reports']['run_time_total'] + rep.run_time
+        if rep.run_time > res['reports']['run_time_max']:
+            res['reports']['run_time_max'] = rep.run_time
         # now need to query events or event_counts for rep.hash_
-        print(dir(pdb))
-        raise SystemExit()
 
     logger.debug("got {num} reports for node".format(num=len(res['reports'])))
 
