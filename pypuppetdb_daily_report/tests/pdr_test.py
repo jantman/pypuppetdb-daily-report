@@ -697,7 +697,7 @@ class Test_format_html:
         assert '<tr><th>foo</th><td>foo1</td><td>foo2</td><td>foo3</td><td>foo4</td><td>foo5</td><td>foo6</td><td>&nbsp;</td></tr>' in stripped
 
     def test_facts(self):
-        data = {'Tue 06/10': {'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100, 'facterversion': {'2.0.0': 102, '1.7.2': 1}}}}}
+        data = {'Tue 06/10': {'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100}, 'facterversion': {'2.0.0': 102, '1.7.2': 1}}}}
 
         dates = ['Tue 06/10',
                  'Mon 06/09',
@@ -716,3 +716,6 @@ class Test_format_html:
         stripped = self.strip_whitespace_re.sub('', html)
         assert '<html>' in html
         assert '<h2>Fact Values</h2>' in html
+        assert '<tr><th>Fact</th><th>Value</th><th>Count</th></tr>' in html
+        print(stripped)
+        assert '<tr><throwspan="3">puppetversion</th><td>3.4.2</td><td>1</td></tr><tr><td>3.4.1</td><td>2</td></tr><tr><td>3.6.1</td><td>100</td></tr><tr><throwspan="2">facterversion' in stripped

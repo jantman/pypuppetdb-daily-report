@@ -1,0 +1,17 @@
+<!-- begin facts.html -->
+<h2>Fact Values</h2>
+<table border="1">
+<tr><th>Fact</th><th>Value</th><th>Count</th></tr>
+{% for fact in data[dates[0]].facts|dictsort %}
+  <tr>
+  <th rowspan="{{ data[dates[0]].facts[fact]|length }}">{{ fact }}</th>
+  {% set nextrow = False %}
+  {% for val in data[dates[0]].facts[fact]|dictsort(false, 'value') %}
+    {% if nextrow %}<tr>{% endif %}
+    <td>{{ val[0] }}</td><td>{{ val[1] }}</td>
+    {% set nextrow = True %}
+    </tr>
+  {% endfor %}
+{% endfor %}
+</table>
+<!-- end facts.html -->
