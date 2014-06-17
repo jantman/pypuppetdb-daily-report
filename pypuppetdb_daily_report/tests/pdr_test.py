@@ -376,7 +376,7 @@ class Test_get_data_for_timespan:
                                                cache_dir='/tmp/cache')
         assert path_exists_mock.call_count == 2
         assert path_exists_mock.call_args_list == [mock.call('/tmp/cache'),
-                                                   mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.json')
+                                                   mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.pickle')
                                                    ]
         assert mock_open.call_count == 1
         fh = mock_open.return_value.__enter__.return_value
@@ -422,7 +422,7 @@ class Test_get_data_for_timespan:
                                                cache_dir='/tmp/cache')
         assert os_mock.path.exists.call_count == 2
         assert os_mock.path.exists.call_args_list == [mock.call('/tmp/cache'),
-                                                      mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.json')
+                                                      mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.pickle')
                                                       ]
         assert os_mock.makedirs.call_count == 1
         assert os_mock.makedirs.call_args == mock.call('/tmp/cache')
@@ -474,7 +474,7 @@ class Test_get_data_for_timespan:
                                                cache_dir='/tmp/cache')
         assert os_mock.path.exists.call_count == 2
         assert os_mock.path.exists.call_args_list == [mock.call('/tmp/cache'),
-                                                      mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.json')
+                                                      mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.pickle')
                                                       ]
         assert mock_open.call_count == 1
         fh = mock_open.return_value.__enter__.return_value

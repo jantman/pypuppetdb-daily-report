@@ -39,7 +39,6 @@ from . import VERSION
 from pypuppetdb import connect
 import requests
 import datetime
-import anyjson
 import os
 from math import floor, ceil
 from jinja2 import Environment, PackageLoader
@@ -47,6 +46,8 @@ import pytz
 import time
 import tzlocal
 from ago import delta2dict
+
+import pickle
 
 FORMAT = "[%(levelname)s %(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
 logging.basicConfig(level=logging.ERROR, format=FORMAT)
@@ -187,8 +188,8 @@ def get_data_for_timespan(pdb, start, end, cache_dir=None):
                                                                                               end=end.strftime('%Y-%m-%d_%H-%M-%S'),
                                                                                               ))
     if cache_dir is not None:
-        cache_filename = "data_{start}_{end}.json".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
-                                                          end=end.strftime('%Y-%m-%d_%H-%M-%S'))
+        cache_filename = "data_{start}_{end}.pickle".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
+                                                            end=end.strftime('%Y-%m-%d_%H-%M-%S'))
         cache_fpath = os.path.join(cache_dir, cache_filename)
         logger.debug("cache file: {fpath}".format(fpath=cache_fpath))
         if not os.path.exists(cache_dir):
@@ -198,7 +199,7 @@ def get_data_for_timespan(pdb, start, end, cache_dir=None):
             with open(cache_fpath, 'r') as fh:
                 logger.debug("reading cache file")
                 raw = fh.read()
-            data = anyjson.deserialize(raw)
+            data = pickle.loads(raw)
             logger.info("returning cached data for timespan: {start} to {end}".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
                                                                                       end=end.strftime('%Y-%m-%d_%H-%M-%S'),
                                                                                       ))
@@ -208,7 +209,7 @@ def get_data_for_timespan(pdb, start, end, cache_dir=None):
         return data
     with open(cache_fpath, 'w') as fh:
         logger.debug("writing data to cache")
-        fh.write(anyjson.serialize(data))
+        fh.write(pickle.dumps(data))
     return data
 
 
