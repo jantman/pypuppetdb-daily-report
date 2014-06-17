@@ -242,8 +242,8 @@ def query_data_for_timespan(pdb, start, end):
     count = 0  # DEBUG
     for node in nodes:
         logger.debug("working node {node}".format(node=node.name))
-        reports = query_data_for_node(pdb, node, start, end)
-        res['nodes'][node.name] = {'reports': reports}
+        node_data = query_data_for_node(pdb, node, start, end)
+        res['nodes'][node.name] = node_data
         if count > 5:
             break
         count += 1

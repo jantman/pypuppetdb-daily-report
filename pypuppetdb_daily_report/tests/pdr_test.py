@@ -709,7 +709,7 @@ class Test_query_data_for_timespan:
         logger_mock = mock.MagicMock()
         get_metrics_mock = mock.MagicMock()
         query_node_mock = mock.MagicMock()
-        query_node_mock.return_value = {'foo': 'bar'}
+        query_node_mock.return_value = {'reports': {'foo': 'bar'}}
         get_facts_mock = mock.MagicMock()
         agg_mock = mock.MagicMock(return_value={})
 
@@ -764,7 +764,7 @@ class Test_query_data_for_timespan:
         get_metrics_mock = mock.MagicMock()
         get_facts_mock = mock.MagicMock()
         query_node_mock = mock.MagicMock()
-        query_node_mock.return_value = {'foo': 'bar'}
+        query_node_mock.return_value = {'reports': {'foo': 'bar'}}
         agg_mock = mock.MagicMock(return_value={})
 
         start = datetime.datetime(2014, 06, 7, hour=4, minute=0, second=0, tzinfo=pytz.utc)
