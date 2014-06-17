@@ -237,10 +237,15 @@ def query_data_for_timespan(pdb, start, end):
     logger.debug("querying nodes")
     nodes = pdb.nodes()
     res['nodes'] = {}
+    logger.critical("CRITICAL - debugging code still in place, node results limited")
+    count = 0  # DEBUG
     for node in nodes:
         logger.debug("working node {node}".format(node=node.name))
         reports = query_data_for_node(pdb, node, start, end)
         res['nodes'][node.name] = {'reports': reports}
+        if count > 5:
+            break
+        count += 1
 
     logger.debug("got {num} nodes".format(num=len(res['nodes'])))
 
@@ -269,6 +274,8 @@ def aggregate_data_for_timespan(data):
                       }
     for node in data['nodes']:
         if 'reports' not in data['nodes'][node]:
+            continue
+        if 'run_count' not in data['nodes'][node]['reports']:
             continue
         if data['nodes'][node]['reports']['run_count'] == 0:
             res['reports']['nodes_with_no_report'] += 1
