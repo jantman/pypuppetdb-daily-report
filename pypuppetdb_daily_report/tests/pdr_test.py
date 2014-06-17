@@ -371,8 +371,8 @@ class Test_get_data_for_timespan:
                 mock.patch('pickle.loads', pickle_mock),
         ):
             result = pdr.get_data_for_timespan(None,
-                                               datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
-                                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59),
+                                               datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
+                                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59),
                                                cache_dir='/tmp/cache')
         assert path_exists_mock.call_count == 2
         assert path_exists_mock.call_args_list == [mock.call('/tmp/cache'),
@@ -417,8 +417,8 @@ class Test_get_data_for_timespan:
                 mock.patch('pickle.dumps', pickle_mock),
         ):
             result = pdr.get_data_for_timespan(None,
-                                               datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
-                                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59),
+                                               datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
+                                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59),
                                                cache_dir='/tmp/cache')
         assert os_mock.path.exists.call_count == 2
         assert os_mock.path.exists.call_args_list == [mock.call('/tmp/cache'),
@@ -433,8 +433,8 @@ class Test_get_data_for_timespan:
         assert fh.write.call_args == mock.call("(dp1\nS'foo'\np2\nI123\ns.")
         assert query_mock.call_count == 1
         assert query_mock.call_args == mock.call(None,
-                                                 datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
-                                                 datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                                                 datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
+                                                 datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59)
                                                  )
         assert logger_mock.debug.call_count == 3
         assert logger_mock.info.call_count == 1
@@ -469,8 +469,8 @@ class Test_get_data_for_timespan:
                 mock.patch('pickle.dumps', pickle_mock),
         ):
             result = pdr.get_data_for_timespan(None,
-                                               datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
-                                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59),
+                                               datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
+                                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59),
                                                cache_dir='/tmp/cache')
         assert os_mock.path.exists.call_count == 2
         assert os_mock.path.exists.call_args_list == [mock.call('/tmp/cache'),
@@ -483,8 +483,8 @@ class Test_get_data_for_timespan:
         assert fh.write.call_args == mock.call("(dp1\nS'foo'\np2\nI123\ns.")
         assert query_mock.call_count == 1
         assert query_mock.call_args == mock.call(None,
-                                                 datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
-                                                 datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                                                 datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
+                                                 datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59)
                                                  )
         assert logger_mock.debug.call_count == 3
         assert logger_mock.info.call_count == 1
@@ -514,8 +514,8 @@ class Test_get_data_for_timespan:
                 mock.patch('pickle.dumps', pickle_mock),
         ):
             result = pdr.get_data_for_timespan(None,
-                                               datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
-                                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59),
+                                               datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
+                                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59),
                                                cache_dir=None)
         assert path_exists_mock.call_count == 0
         assert mock_open.call_count == 0
@@ -524,8 +524,8 @@ class Test_get_data_for_timespan:
         assert fh.write.call_count == 0
         assert query_mock.call_count == 1
         assert query_mock.call_args == mock.call(None,
-                                                 datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
-                                                 datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59)
+                                                 datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
+                                                 datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59)
                                                  )
         assert logger_mock.debug.call_count == 1
         assert logger_mock.info.call_count == 0
@@ -546,13 +546,13 @@ class Test_main:
                 'Mon 06/09': {'foo': 'bar'}
                 }
 
-        date_list = [FakeDatetime(2014, 06, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc),
-                     FakeDatetime(2014, 06, 10, hour=3, minute=59, second=59, tzinfo=pytz.utc),
-                     FakeDatetime(2014, 06, 9, hour=3, minute=59, second=59, tzinfo=pytz.utc),
-                     FakeDatetime(2014, 06, 8, hour=3, minute=59, second=59, tzinfo=pytz.utc),
-                     FakeDatetime(2014, 06, 7, hour=3, minute=59, second=59, tzinfo=pytz.utc),
-                     FakeDatetime(2014, 06, 6, hour=3, minute=59, second=59, tzinfo=pytz.utc),
-                     FakeDatetime(2014, 06, 5, hour=3, minute=59, second=59, tzinfo=pytz.utc),
+        date_list = [FakeDatetime(2014, 6, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc),
+                     FakeDatetime(2014, 6, 10, hour=3, minute=59, second=59, tzinfo=pytz.utc),
+                     FakeDatetime(2014, 6, 9, hour=3, minute=59, second=59, tzinfo=pytz.utc),
+                     FakeDatetime(2014, 6, 8, hour=3, minute=59, second=59, tzinfo=pytz.utc),
+                     FakeDatetime(2014, 6, 7, hour=3, minute=59, second=59, tzinfo=pytz.utc),
+                     FakeDatetime(2014, 6, 6, hour=3, minute=59, second=59, tzinfo=pytz.utc),
+                     FakeDatetime(2014, 6, 5, hour=3, minute=59, second=59, tzinfo=pytz.utc),
                      ]
 
         dates = ['Tue 06/10',
@@ -592,13 +592,13 @@ class Test_main:
 
         assert dft_mock.call_count == 7
         dft_expected = [
-            mock.call(pdb_mock, FakeDatetime(2014, 06, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 06, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 06, 9, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 06, 10, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 06, 8, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 06, 9, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 06, 7, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 06, 8, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 06, 6, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 06, 7, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 06, 5, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 06, 6, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 06, 4, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 06, 5, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 6, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 6, 9, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 10, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 6, 8, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 9, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 6, 7, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 8, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 6, 6, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 7, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 6, 5, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 6, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call(pdb_mock, FakeDatetime(2014, 6, 4, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 5, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
         ]
         assert dft_mock.mock_calls == dft_expected
 
@@ -713,8 +713,8 @@ class Test_query_data_for_timespan:
         get_facts_mock = mock.MagicMock()
         agg_mock = mock.MagicMock(return_value={})
 
-        start = datetime.datetime(2014, 06, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc)
-        end = datetime.datetime(2014, 06, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc)
+        start = datetime.datetime(2014, 6, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc)
+        end = datetime.datetime(2014, 6, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc)
 
         with nested(
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock),
@@ -767,8 +767,8 @@ class Test_query_data_for_timespan:
         query_node_mock.return_value = {'reports': {'foo': 'bar'}}
         agg_mock = mock.MagicMock(return_value={})
 
-        start = datetime.datetime(2014, 06, 7, hour=4, minute=0, second=0, tzinfo=pytz.utc)
-        end = datetime.datetime(2014, 06, 8, hour=3, minute=59, second=59, tzinfo=pytz.utc)
+        start = datetime.datetime(2014, 6, 7, hour=4, minute=0, second=0, tzinfo=pytz.utc)
+        end = datetime.datetime(2014, 6, 8, hour=3, minute=59, second=59, tzinfo=pytz.utc)
 
         with nested(
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock),
@@ -806,33 +806,33 @@ class Test_query_data_for_node:
 
     # pypuppetdb datetimes are tz-aware, and appear to always be UTC
     r1 = mock.MagicMock()
-    r1.start = datetime.datetime(2014, 06, 11, hour=5, minute=50, second=0, tzinfo=pytz.utc)
+    r1.start = datetime.datetime(2014, 6, 11, hour=5, minute=50, second=0, tzinfo=pytz.utc)
     r1.run_time = datetime.timedelta(seconds=4000)
     r1.hash_ = 'hash1'
     r2 = mock.MagicMock()
-    r2.start = datetime.datetime(2014, 06, 11, hour=5, minute=9, second=0, tzinfo=pytz.utc)
+    r2.start = datetime.datetime(2014, 6, 11, hour=5, minute=9, second=0, tzinfo=pytz.utc)
     r2.run_time = datetime.timedelta(seconds=100)
     r2.hash_ = 'hash2'
     # start what should return
     r3 = mock.MagicMock()
-    r3.start = datetime.datetime(2014, 06, 11, hour=3, minute=55, second=0, tzinfo=pytz.utc)
+    r3.start = datetime.datetime(2014, 6, 11, hour=3, minute=55, second=0, tzinfo=pytz.utc)
     r3.run_time = datetime.timedelta(seconds=1)
     r3.hash_ = 'hash3'
     r4 = mock.MagicMock()
-    r4.start = datetime.datetime(2014, 06, 10, hour=17, minute=0, second=0, tzinfo=pytz.utc)
+    r4.start = datetime.datetime(2014, 6, 10, hour=17, minute=0, second=0, tzinfo=pytz.utc)
     r4.run_time = datetime.timedelta(seconds=100)
     r4.hash_ = 'hash4'
     r5 = mock.MagicMock()
-    r5.start = datetime.datetime(2014, 06, 10, hour=5, minute=0, second=2, tzinfo=pytz.utc)
+    r5.start = datetime.datetime(2014, 6, 10, hour=5, minute=0, second=2, tzinfo=pytz.utc)
     r5.run_time = datetime.timedelta(seconds=1000)
     r5.hash_ = 'hash5'
     r6 = mock.MagicMock()
-    r6.start = datetime.datetime(2014, 06, 10, hour=4, minute=59, second=55, tzinfo=pytz.utc)
+    r6.start = datetime.datetime(2014, 6, 10, hour=4, minute=59, second=55, tzinfo=pytz.utc)
     r6.run_time = datetime.timedelta(seconds=10)
     r6.hash_ = 'hash6'
     # end what should return
     r7 = mock.MagicMock()
-    r7.start = datetime.datetime(2014, 06, 9, hour=17, minute=50, second=0, tzinfo=pytz.utc)
+    r7.start = datetime.datetime(2014, 6, 9, hour=17, minute=50, second=0, tzinfo=pytz.utc)
     r7.run_time = datetime.timedelta(seconds=2000)
     r7.hash_ = 'hash7'
     reports = [r1, r2, r3, r4, r5, r6, r7]
@@ -845,8 +845,8 @@ class Test_query_data_for_node:
         logger_mock = mock.MagicMock()
         node_mock.reports.return_value = self.reports
 
-        start = datetime.datetime(2014, 06, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc)
-        end = datetime.datetime(2014, 06, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc)
+        start = datetime.datetime(2014, 6, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc)
+        end = datetime.datetime(2014, 6, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc)
 
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
             foo = pdr.query_data_for_node(pdb_mock,
@@ -872,11 +872,11 @@ class Test_query_data_for_node:
         node_mock = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
         node_mock.name = 'node1.example.com'
         r1 = mock.MagicMock()
-        r1.start = datetime.datetime(2014, 06, 10, hour=5, minute=0, second=2, tzinfo=pytz.utc)
+        r1.start = datetime.datetime(2014, 6, 10, hour=5, minute=0, second=2, tzinfo=pytz.utc)
         r1.run_time = datetime.timedelta(seconds=1000)
         r1.hash_ = 'hash1'
         r2 = mock.MagicMock()
-        r2.start = datetime.datetime(2014, 06, 10, hour=5, minute=10, second=2, tzinfo=pytz.utc)
+        r2.start = datetime.datetime(2014, 6, 10, hour=5, minute=10, second=2, tzinfo=pytz.utc)
         r2.run_time = datetime.timedelta(seconds=10)
         r2.hash_ = 'hash2'
         node_mock.reports.return_value = [r1, r2]
@@ -888,8 +888,8 @@ class Test_query_data_for_node:
                                                u'subject': {u'title': u'node1.example.com'}}
                                               ]
 
-        start = datetime.datetime(2014, 06, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc)
-        end = datetime.datetime(2014, 06, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc)
+        start = datetime.datetime(2014, 6, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc)
+        end = datetime.datetime(2014, 6, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc)
 
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
             foo = pdr.query_data_for_node(pdb_mock,
@@ -975,8 +975,8 @@ class Test_format_html:
                 html = pdr.format_html('foo.example.com',
                                        self.dates,
                                        self.data,
-                                       datetime.datetime(2014, 06, 3, 0, 0, 0, tzinfo=pytz.utc),
-                                       datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+                                       datetime.datetime(2014, 6, 3, 0, 0, 0, tzinfo=pytz.utc),
+                                       datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
                                        )
         assert env_mock.call_count == 1
         assert pl_mock.call_count == 1
@@ -989,8 +989,8 @@ class Test_format_html:
         assert tmpl_mock.render.call_args == mock.call(data=self.data,
                                                        dates=self.dates,
                                                        hostname='foo.example.com',
-                                                       start=datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
-                                                       end=datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+                                                       start=datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+                                                       end=datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
                                                        )
         assert html == 'baz'
 
@@ -998,8 +998,8 @@ class Test_format_html:
         html = pdr.format_html('foo.example.com',
                                self.dates,
                                self.data,
-                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
-                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+                               datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
                                )
         assert '<html>' in html
         assert '<h1>daily puppet(db) run summary on foo.example.com for Tue Jun 03, 2014 to Tue Jun 10</h1>' in html
@@ -1008,8 +1008,8 @@ class Test_format_html:
         html = pdr.format_html('foo.example.com',
                                self.dates,
                                self.data,
-                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
-                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+                               datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
                                )
         stripped = self.strip_whitespace_re.sub('', html)
         assert '<html>' in html
@@ -1022,8 +1022,8 @@ class Test_format_html:
         html = pdr.format_html('foo.example.com',
                                self.dates,
                                self.data,
-                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
-                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+                               datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
                                )
         stripped = self.strip_whitespace_re.sub('', html)
         assert '<html>' in html
@@ -1035,8 +1035,8 @@ class Test_format_html:
         html = pdr.format_html('foo.example.com',
                                self.dates,
                                self.data,
-                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
-                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+                               datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
                                )
         stripped = self.strip_whitespace_re.sub('', html)
         assert '<html>' in html
@@ -1064,8 +1064,8 @@ class Test_format_html:
         html = pdr.format_html('foo.example.com',
                                self.dates,
                                data,
-                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
-                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+                               datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
                                )
         assert '<html>' in html
 
