@@ -346,7 +346,6 @@ def query_data_for_node(pdb, node, start, end):
                 res['reports']['with_changes'] += 1
             if e['failures'] > 0:
                 res['reports']['with_failures'] += 1
-        print(res['reports'])
 
     logger.debug("got {num} reports for node".format(num=len(res['reports'])))
 
