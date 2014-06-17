@@ -2,7 +2,7 @@
 <h2>Report Overview</h2>
 <table border="1">
 <tr><th>&nbsp;</th>{% for date_s in dates %}<th>{{ date_s }}</th>{% endfor %}</tr>
-{% for stat in data[dates[0]].aggregate.reports %}
+{% for stat in ['run_count', 'with_failures', 'with_changes', 'with_skips', 'run_time_max', 'run_time_avg', 'nodes_with_no_report'] %}
   <tr>
   <th>{{ stat|reportmetricname }}</th>
   {% for date_s in dates %}
