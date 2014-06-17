@@ -993,6 +993,9 @@ class Test_filter_report_metric_format:
         d = datetime.timedelta(0, 1000)
         assert pdr.filter_report_metric_format(d) == '16m 40s'
 
+    def test_other(self):
+        assert pdr.filter_report_metric_format(123.1) == '123.1'
+
 
 class Test_aggregate_data_for_timespan:
 
@@ -1036,3 +1039,24 @@ class Test_aggregate_data_for_timespan:
         assert result['reports']['with_skips'] == 0
         assert result['reports']['run_time_avg'] == datetime.timedelta()
         assert result['reports']['nodes_with_no_report'] == 1
+
+    def test_report_counts_empty_node(self):
+        data = {
+            'metrics': {'foo': {'formatted': 'foo1'}, 'bar': {'formatted': 'bar1'}, 'baz': {'formatted': 'baz1'}},
+            'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100}, 'facterversion': {'2.0.0': 102, '1.7.2': 1}},
+            'nodes': {
+                'node1.example.com': {
+                    'reports': { },
+                },
+                'node2.example.com': { },
+            },
+        }
+        result = pdr.aggregate_data_for_timespan(data)
+        assert result['reports']['run_count'] == 0
+        assert result['reports']['run_time_total'] == datetime.timedelta()
+        assert result['reports']['run_time_max'] == datetime.timedelta()
+        assert result['reports']['with_failures'] == 0
+        assert result['reports']['with_changes'] == 0
+        assert result['reports']['with_skips'] == 0
+        assert result['reports']['run_time_avg'] == datetime.timedelta()
+        assert result['reports']['nodes_with_no_report'] == 2

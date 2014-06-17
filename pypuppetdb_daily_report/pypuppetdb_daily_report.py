@@ -166,7 +166,7 @@ def filter_report_metric_format(o):
                 s += '{i}{suffix} '.format(i=d[i], suffix=i[0])
         s = s.strip()
         return s
-    return o
+    return str(o)
 
 
 def get_data_for_timespan(pdb, start, end, cache_dir=None):
@@ -275,8 +275,10 @@ def aggregate_data_for_timespan(data):
                       }
     for node in data['nodes']:
         if 'reports' not in data['nodes'][node]:
+            res['reports']['nodes_with_no_report'] += 1
             continue
         if 'run_count' not in data['nodes'][node]['reports']:
+            res['reports']['nodes_with_no_report'] += 1
             continue
         if data['nodes'][node]['reports']['run_count'] == 0:
             res['reports']['nodes_with_no_report'] += 1
