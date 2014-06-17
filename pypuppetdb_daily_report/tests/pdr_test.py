@@ -1066,3 +1066,29 @@ class Test_aggregate_data_for_timespan:
         assert result['reports']['with_changes'] == 4
         assert result['reports']['with_skips'] == 3
         assert result['reports']['run_time_avg'] == datetime.timedelta(0, 245, 555555)
+
+    def test_report_counts_divzero(self):
+        data = {
+            'metrics': {'foo': {'formatted': 'foo1'}, 'bar': {'formatted': 'bar1'}, 'baz': {'formatted': 'baz1'}},
+            'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100}, 'facterversion': {'2.0.0': 102, '1.7.2': 1}},
+            'nodes': {
+                'node1.example.com': {
+                    'reports': {
+                        'run_count': 0,
+                        'run_time_total': datetime.timedelta(),
+                        'run_time_max': datetime.timedelta(),
+                        'with_failures': 0,
+                        'with_changes': 0,
+                        'with_skips': 0,
+                    },
+                },
+            },
+        }
+        result = pdr.aggregate_data_for_timespan(data)
+        assert result['reports']['run_count'] == 0
+        assert result['reports']['run_time_total'] == datetime.timedelta()
+        assert result['reports']['run_time_max'] == datetime.timedelta()
+        assert result['reports']['with_failures'] == 0
+        assert result['reports']['with_changes'] == 0
+        assert result['reports']['with_skips'] == 0
+        assert result['reports']['run_time_avg'] == datetime.timedelta()
