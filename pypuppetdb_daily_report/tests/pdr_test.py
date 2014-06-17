@@ -961,9 +961,10 @@ class Test_format_html:
         assert '<html>' in html
 
     def test_run_node_counts(self):
+        data = deepcopy(test_data.NODE_SUMMARY_DATA)
         html = pdr.format_html('foo.example.com',
                                self.dates,
-                               self.data,
+                               data,
                                datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
                                datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
                                )
@@ -971,11 +972,12 @@ class Test_format_html:
         assert '<html>' in html
         assert '<h2>Node Summary</h2>' in html
         assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
-        assert '<tr><th>100%FailedRuns</th><td>9</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>50%+FailedRuns</th><td>8(89%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>AnyFailedRuns</th><td>4(44%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>LessThan40Reports</th><td>3(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>WithChanges</th><td>4m5s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>TotalNodes</th><td>10</td><td>8</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>100%FailedRuns</th><td>1(10%)</td><td>4(50%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>50%+FailedRuns</th><td>4(40%)</td><td>0</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>AnyFailedRuns</th><td>2(20%)</td><td>2(25%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>LessThan40Reports</th><td>1(10%)</td><td>0</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>WithChanges</th><td>5(50%)</td><td>6(75%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
 
 
 class Test_filter_report_metric_name:
@@ -1029,6 +1031,11 @@ class Test_aggregate_data_for_timespan:
         assert result['reports']['run_time_avg'].days == 0
         assert result['reports']['run_time_avg'].seconds == 245
         assert result['reports']['nodes_with_no_report'] == 1
+
+    def test_node_counts(self):
+        data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
+        data.pop('aggregate', None)
+        data['nodes'] = deepcopy(test_data.NODE_AGGR_NODES)
 
     def test_report_counts_divzero(self):
         data = {
