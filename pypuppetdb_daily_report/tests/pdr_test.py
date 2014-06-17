@@ -45,7 +45,7 @@ from copy import deepcopy
 from pypuppetdb_daily_report import pypuppetdb_daily_report as pdr
 
 # fixtures
-import test_data
+from . import test_data
 
 
 class OptionsObject(object):
