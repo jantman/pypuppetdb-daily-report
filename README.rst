@@ -1,6 +1,21 @@
 pypuppetdb_daily_report
 =======================
 
+.. image:: https://pypip.in/v/pypuppetdb-daily-report/badge.png
+   :target: https://crate.io/packages/pypuppetdb-daily-report
+
+.. image:: https://pypip.in/d/pypuppetdb-daily-report/badge.png
+   :target: https://crate.io/packages/pypuppetdb-daily-report
+
+
+.. image:: https://secure.travis-ci.org/jantman/pypuppetdb-daily-report.png?branch=master
+   :target: http://travis-ci.org/jantman/pypuppetdb-daily-report
+   :alt: travis-ci for master branch
+
+.. image:: https://coveralls.io/repos/jantman/pypuppetdb-daily-report/badge.png?branch=master
+   :target: https://coveralls.io/r/jantman/pypuppetdb-daily-report?branch=master
+   :alt: coverage report for master branch
+
 A daily run summary report for PuppetDB, written in Python using nedap's pypuppetdb module.
 
 The report displays the following for the current point-in-time:
