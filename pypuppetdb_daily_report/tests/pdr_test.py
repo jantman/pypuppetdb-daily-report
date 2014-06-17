@@ -91,6 +91,16 @@ FINAL_DATA = {
                     'with_skips': 0,
                 },
             },
+            'node5.example.com': {
+                'reports': {
+                    'run_count': 0,
+                    'run_time_total': datetime.timedelta(),
+                    'run_time_max': datetime.timedelta(),
+                    'with_failures': 0,
+                    'with_changes': 0,
+                    'with_skips': 0,
+                },
+            },
         },
         'aggregate': {
             'reports': {
@@ -101,6 +111,7 @@ FINAL_DATA = {
                 'run_count': 9,
                 'run_time_total': datetime.timedelta(0, 2210),
                 'run_time_avg': datetime.timedelta(0, 245, 555555),
+                'nodes_with_no_report': 1,
             },
         },
     },
@@ -1019,6 +1030,7 @@ class Test_format_html:
         assert '<tr><th>WithSkippedResources</th><td>3(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
         assert '<tr><th>AverageRuntime</th><td>4m5s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
         assert '<tr><th>MaximumRuntime</th><td>16m40s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>NodesWithNoReport</th><td>1</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
 
 
 class Test_filter_report_metric_name:
@@ -1030,6 +1042,7 @@ class Test_filter_report_metric_name:
         assert pdr.filter_report_metric_name('with_changes') == 'With Changes'
         assert pdr.filter_report_metric_name('run_count') == 'Total Reports'
         assert pdr.filter_report_metric_name('run_time_avg') == 'Average Runtime'
+        assert pdr.filter_report_metric_name('nodes_with_no_report') == 'Nodes With No Report'
 
 
 class Test_filter_report_metric_format:
@@ -1066,6 +1079,7 @@ class Test_aggregate_data_for_timespan:
         assert result['reports']['with_changes'] == 4
         assert result['reports']['with_skips'] == 3
         assert result['reports']['run_time_avg'] == datetime.timedelta(0, 245, 555555)
+        assert result['reports']['nodes_with_no_report'] == 1
 
     def test_report_counts_divzero(self):
         data = {
@@ -1092,3 +1106,4 @@ class Test_aggregate_data_for_timespan:
         assert result['reports']['with_changes'] == 0
         assert result['reports']['with_skips'] == 0
         assert result['reports']['run_time_avg'] == datetime.timedelta()
+        assert result['reports']['nodes_with_no_report'] == 1

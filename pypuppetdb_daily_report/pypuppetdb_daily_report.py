@@ -144,6 +144,7 @@ def filter_report_metric_name(s):
                     'run_count': 'Total Reports',
                     'run_time_total': 'Total Runtime',
                     'run_time_avg': 'Average Runtime',
+                    'nodes_with_no_report': 'Nodes With No Report',
                     }
     return metric_names.get(s, s)
 
@@ -264,10 +265,13 @@ def aggregate_data_for_timespan(data):
                       'with_failures': 0,
                       'with_changes': 0,
                       'with_skips': 0,
+                      'nodes_with_no_report': 0,
                       }
     for node in data['nodes']:
         if 'reports' not in data['nodes'][node]:
             continue
+        if data['nodes'][node]['reports']['run_count'] == 0:
+            res['reports']['nodes_with_no_report'] += 1
         for key in ['run_count', 'with_failures', 'with_changes', 'with_skips']:
             if key in data['nodes'][node]['reports']:
                 res['reports'][key] += data['nodes'][node]['reports'][key]
@@ -275,7 +279,10 @@ def aggregate_data_for_timespan(data):
             res['reports']['run_time_total'] = res['reports']['run_time_total'] + data['nodes'][node]['reports']['run_time_total']
         if 'run_time_max' in data['nodes'][node]['reports'] and data['nodes'][node]['reports']['run_time_max'] > res['reports']['run_time_max']:
             res['reports']['run_time_max'] = data['nodes'][node]['reports']['run_time_max']
-    res['reports']['run_time_avg'] = res['reports']['run_time_total'] / res['reports']['run_count']
+    print("run_time_total={r}".format(r=res['reports']['run_time_total']))
+    print("run_count={r}".format(r=res['reports']['run_count']))
+    if res['reports']['run_count'] != 0:
+        res['reports']['run_time_avg'] = res['reports']['run_time_total'] / res['reports']['run_count']
     logger.debug("aggregation done, returning result")
     return res
 
