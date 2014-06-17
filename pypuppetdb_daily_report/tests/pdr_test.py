@@ -1050,6 +1050,25 @@ class Test_format_html:
         assert '<tr><th>MaximumRuntime</th><td>16m40s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
         assert '<tr><th>NodesWithNoReport</th><td>1</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
 
+    def test_no_runs(self):
+        data = deepcopy(FINAL_DATA)
+        foo = data['Tue 06/10']['nodes']['node5.example.com']
+        data['Tue 06/10']['nodes'] = {'node5.example.com': foo}
+        data['Tue 06/10']['aggregate']['reports'] = {'run_count': 0,
+                                                     'with_failures': 0,
+                                                     'with_changes': 0,
+                                                     'with_skips': 0,
+                                                     'run_time_total': datetime.timedelta(),
+                                                     'run_time_max': datetime.timedelta()
+                                                     }
+        html = pdr.format_html('foo.example.com',
+                               self.dates,
+                               data,
+                               datetime.datetime(2014, 06, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+                               datetime.datetime(2014, 06, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+                               )
+        assert '<html>' in html
+
 
 class Test_filter_report_metric_name:
 
