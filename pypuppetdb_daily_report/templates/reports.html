@@ -9,7 +9,7 @@
     <td>
     {% if 'aggregate' in data[date_s] and 'reports' in data[date_s]['aggregate'] and stat in data[date_s]['aggregate']['reports'] %}
       {{ data[date_s]['aggregate']['reports'][stat]|reportmetricformat }}
-      {% if stat in ['with_failures', 'with_changes', 'with_skips'] %}
+      {% if stat in ['with_failures', 'with_changes', 'with_skips'] and data[date_s]['aggregate']['reports']['run_count'] > 0 %}
         {{ '({0:.0%})'.format(data[date_s]['aggregate']['reports'][stat]/data[date_s]['aggregate']['reports']['run_count']) }}
       {% endif %}
     {% else %}
