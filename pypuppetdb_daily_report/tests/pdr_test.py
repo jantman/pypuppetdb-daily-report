@@ -353,6 +353,8 @@ class Test_get_data_for_timespan:
         query_mock = mock.MagicMock()
         query_mock.return_value = {}
         logger_mock = mock.MagicMock()
+        anyjson_mock = mock.MagicMock()
+        anyjson_mock.return_value = {'foo': 123}
 
         raw_json = '{"foo": 123}'
         mock_open = mock.mock_open(read_data=raw_json)
@@ -365,7 +367,8 @@ class Test_get_data_for_timespan:
                 mock.patch('os.path.exists', path_exists_mock),
                 mock.patch(mock_target, mock_open, create=True),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock),
-                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock)
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock),
+                mock.patch('anyjson.deserialize', anyjson_mock),
         ):
             result = pdr.get_data_for_timespan(None,
                                                datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
@@ -383,9 +386,11 @@ class Test_get_data_for_timespan:
         assert query_mock.call_count == 0
         assert logger_mock.debug.call_count == 3
         assert logger_mock.info.call_count == 1
+        assert anyjson_mock.call_count == 1
+        assert anyjson_mock.call_args == mock.call(raw_json)
 
     def test_no_cachedir(self):
-        """cache_dir doesn't exist """
+        """cache_dir doesn't exist, it gets created """
         def path_join(*args):
             return os.path.join(*args)
         os_mock = mock.MagicMock()
@@ -395,6 +400,8 @@ class Test_get_data_for_timespan:
         query_mock = mock.MagicMock()
         query_mock.return_value = {"foo": 123}
         logger_mock = mock.MagicMock()
+        anyjson_mock = mock.MagicMock()
+        anyjson_mock.return_value = '{"foo": 123}'
 
         mock_open = mock.mock_open()
         if sys.version_info[0] == 3:
@@ -406,7 +413,8 @@ class Test_get_data_for_timespan:
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.os', os_mock),
                 mock.patch(mock_target, mock_open, create=True),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock),
-                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock)
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock),
+                mock.patch('anyjson.serialize', anyjson_mock),
         ):
             result = pdr.get_data_for_timespan(None,
                                                datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
@@ -430,6 +438,8 @@ class Test_get_data_for_timespan:
                                                  )
         assert logger_mock.debug.call_count == 3
         assert logger_mock.info.call_count == 1
+        assert anyjson_mock.call_count == 1
+        assert anyjson_mock.call_args == mock.call({"foo": 123})
 
     def test_not_cached(self):
         """ data not cached """
@@ -442,6 +452,8 @@ class Test_get_data_for_timespan:
         query_mock = mock.MagicMock()
         query_mock.return_value = {"foo": 123}
         logger_mock = mock.MagicMock()
+        anyjson_mock = mock.MagicMock()
+        anyjson_mock.return_value = '{"foo": 123}'
 
         mock_open = mock.mock_open()
         if sys.version_info[0] == 3:
@@ -453,7 +465,8 @@ class Test_get_data_for_timespan:
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.os', os_mock),
                 mock.patch(mock_target, mock_open, create=True),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock),
-                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock)
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock),
+                mock.patch('anyjson.serialize', anyjson_mock),
         ):
             result = pdr.get_data_for_timespan(None,
                                                datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
@@ -475,6 +488,8 @@ class Test_get_data_for_timespan:
                                                  )
         assert logger_mock.debug.call_count == 3
         assert logger_mock.info.call_count == 1
+        assert anyjson_mock.call_count == 1
+        assert anyjson_mock.call_args == mock.call({"foo": 123})
 
     def test_no_cache(self):
         """ caching disabled """
@@ -483,6 +498,7 @@ class Test_get_data_for_timespan:
         query_mock = mock.MagicMock()
         query_mock.return_value = {"foo": 123}
         logger_mock = mock.MagicMock()
+        anyjson_mock = mock.MagicMock()
 
         mock_open = mock.mock_open()
         if sys.version_info[0] == 3:
@@ -494,7 +510,8 @@ class Test_get_data_for_timespan:
                 mock.patch('os.path.exists', path_exists_mock),
                 mock.patch(mock_target, mock_open, create=True),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock),
-                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock)
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock),
+                mock.patch('anyjson.serialize', anyjson_mock),
         ):
             result = pdr.get_data_for_timespan(None,
                                                datetime.datetime(2014, 06, 10, hour=0, minute=0, second=0),
@@ -512,6 +529,7 @@ class Test_get_data_for_timespan:
                                                  )
         assert logger_mock.debug.call_count == 1
         assert logger_mock.info.call_count == 0
+        assert anyjson_mock.call_count == 0
 
 
 class Test_main:
