@@ -46,6 +46,7 @@ from jinja2 import Environment, PackageLoader
 import pytz
 import time
 import tzlocal
+from ago import delta2dict
 
 FORMAT = "[%(levelname)s %(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s"
 logging.basicConfig(level=logging.ERROR, format=FORMAT)
@@ -120,6 +121,8 @@ def format_html(hostname, dates, date_data, start_date, end_date):
     :type end_date: Datetime
     """
     env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
+    env.filters['reportmetricname'] = filter_report_metric_name
+    env.filters['reportmetricformat'] = filter_report_metric_format
     template = env.get_template('base.html')
     html = template.render(data=date_data,
                            dates=dates,
@@ -128,6 +131,40 @@ def format_html(hostname, dates, date_data, start_date, end_date):
                            end=end_date
                            )
     return html
+
+
+def filter_report_metric_name(s):
+    """
+    jinja2 filter to return the metric name for a given metric key
+    """
+    metric_names = {'with_skips': 'With Skipped Resources',
+                    'run_time_max': 'Maximum Runtime',
+                    'with_failures': 'With Failures',
+                    'with_changes': 'With Changes',
+                    'run_count': 'Total Reports',
+                    'run_time_total': 'Total Runtime',
+                    'run_time_avg': 'Average Runtime',
+                    }
+    return metric_names.get(s, s)
+
+
+def filter_report_metric_format(o):
+    """
+    jinja2 filter to return a formatted metric string for the given metric value
+    """
+    if isinstance(o, str):
+        return o
+    if isinstance(o, int):
+        return '{o}'.format(o=o)
+    if isinstance(o, datetime.timedelta):
+        d = delta2dict(o)
+        s = ''
+        for i in ['day', 'hour', 'minute', 'second']:
+            if d[i] > 0:
+                s += '{i}{suffix} '.format(i=d[i], suffix=i[0])
+        s = s.strip()
+        return s
+    return o
 
 
 def get_data_for_timespan(pdb, start, end, cache_dir=None):
@@ -206,6 +243,40 @@ def query_data_for_timespan(pdb, start, end):
 
     logger.debug("got {num} nodes".format(num=len(res['nodes'])))
 
+    logger.debug("aggregating data")
+    res['aggregate'] = aggregate_data_for_timespan(res)
+
+    return res
+
+
+def aggregate_data_for_timespan(data):
+    """
+    Calculate aggregate values for all data in a given timespan
+
+    :param data: dict of result data from query_data_for_timespan()
+    :type data: dict
+    """
+    res = {}
+    res['reports'] = {'run_count': 0,
+                      'run_time_total': datetime.timedelta(),
+                      'run_time_max': datetime.timedelta(),
+                      'run_time_avg': datetime.timedelta(),
+                      'with_failures': 0,
+                      'with_changes': 0,
+                      'with_skips': 0,
+                      }
+    for node in data['nodes']:
+        if 'reports' not in data['nodes'][node]:
+            continue
+        for key in ['run_count', 'with_failures', 'with_changes', 'with_skips']:
+            if key in data['nodes'][node]['reports']:
+                res['reports'][key] += data['nodes'][node]['reports'][key]
+        if 'run_time_total' in data['nodes'][node]['reports']:
+            res['reports']['run_time_total'] = res['reports']['run_time_total'] + data['nodes'][node]['reports']['run_time_total']
+        if 'run_time_max' in data['nodes'][node]['reports'] and data['nodes'][node]['reports']['run_time_max'] > res['reports']['run_time_max']:
+            res['reports']['run_time_max'] = data['nodes'][node]['reports']['run_time_max']
+    res['reports']['run_time_avg'] = res['reports']['run_time_total'] / res['reports']['run_count']
+    logger.debug("aggregation done, returning result")
     return res
 
 

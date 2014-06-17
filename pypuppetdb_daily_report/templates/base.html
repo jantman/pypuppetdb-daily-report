@@ -4,5 +4,6 @@
   <h1>daily puppet(db) run summary on {{ hostname }} for {{ start.strftime('%a %b %d, %Y') }} to {{ end.strftime('%a %b %d') }}</h1>
   {% include 'metrics.html' %}
   {% include 'facts.html' %}
+  {% include 'reports.html' %}
   </body>
 </html>

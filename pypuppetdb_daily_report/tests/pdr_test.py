@@ -41,8 +41,85 @@ from jinja2 import Environment, PackageLoader, Template
 from contextlib import nested
 import pytz
 import pprint
+from copy import deepcopy
 
 from pypuppetdb_daily_report import pypuppetdb_daily_report as pdr
+
+# this should be a fixture...
+FINAL_DATA = {
+    'Tue 06/10': {
+        'metrics': {'foo': {'formatted': 'foo1'}, 'bar': {'formatted': 'bar1'}, 'baz': {'formatted': 'baz1'}},
+        'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100}, 'facterversion': {'2.0.0': 102, '1.7.2': 1}},
+        'nodes': {
+            'node1.example.com': {
+                'reports': {
+                    'run_count': 2,
+                    'run_time_total': datetime.timedelta(seconds=1010),
+                    'run_time_max': datetime.timedelta(seconds=1000),
+                    'with_failures': 2,
+                    'with_changes': 2,
+                    'with_skips': 2,
+                },
+            },
+            'node2.example.com': {
+                'reports': {
+                    'run_count': 1,
+                    'run_time_total': datetime.timedelta(seconds=100),
+                    'run_time_max': datetime.timedelta(seconds=100),
+                    'with_failures': 1,
+                    'with_changes': 1,
+                    'with_skips': 1,
+                },
+            },
+            'node3.example.com': {
+                'reports': {
+                    'run_count': 1,
+                    'run_time_total': datetime.timedelta(seconds=500),
+                    'run_time_max': datetime.timedelta(seconds=500),
+                    'with_failures': 0,
+                    'with_changes': 1,
+                    'with_skips': 0,
+                },
+            },
+            'node4.example.com': {
+                'reports': {
+                    'run_count': 5,
+                    'run_time_total': datetime.timedelta(seconds=600),
+                    'run_time_max': datetime.timedelta(seconds=500),
+                    'with_failures': 5,
+                    'with_changes': 0,
+                    'with_skips': 0,
+                },
+            },
+        },
+        'aggregate': {
+            'reports': {
+                'with_skips': 3,
+                'run_time_max': datetime.timedelta(0, 1000),
+                'with_failures': 8,
+                'with_changes': 4,
+                'run_count': 9,
+                'run_time_total': datetime.timedelta(0, 2210),
+                'run_time_avg': datetime.timedelta(0, 245, 555555),
+            },
+        },
+    },
+    'Mon 06/09': {'metrics': {'foo': {'formatted': 'foo2'}, 'bar': {'formatted': 'bar2'}, 'baz': {'formatted': 'baz2'}}},
+    'Sun 06/08': {'metrics': {'foo': {'formatted': 'foo3'}, 'bar': {'formatted': 'bar3'}, 'baz': {'formatted': 'baz3'}}},
+    'Sat 06/07': {'metrics': {'foo': {'formatted': 'foo4'}, 'bar': {'formatted': 'bar4'}, 'baz': {'formatted': 'baz4'}}},
+    'Fri 06/06': {'metrics': {'foo': {'formatted': 'foo5'}, 'bar': {'formatted': 'bar5'}, 'baz': {'formatted': 'baz5'}}},
+    'Thu 06/05': {'metrics': {'foo': {'formatted': 'foo6'}, 'bar': {'formatted': 'bar6'}, 'baz': {'formatted': 'baz6'}}},
+    'Wed 06/04': {'foo': 'bar'},
+}
+
+FINAL_DATES = ['Tue 06/10',
+               'Mon 06/09',
+               'Sun 06/08',
+               'Sat 06/07',
+               'Fri 06/06',
+               'Thu 06/05',
+               'Wed 06/04'
+               ]
 
 
 class OptionsObject(object):
@@ -605,6 +682,7 @@ class Test_query_data_for_timespan:
         query_node_mock = mock.MagicMock()
         query_node_mock.return_value = {'foo': 'bar'}
         get_facts_mock = mock.MagicMock()
+        agg_mock = mock.MagicMock(return_value={})
 
         start = datetime.datetime(2014, 06, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc)
         end = datetime.datetime(2014, 06, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc)
@@ -614,6 +692,7 @@ class Test_query_data_for_timespan:
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_dashboard_metrics', get_metrics_mock),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_facts', get_facts_mock),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_node', query_node_mock),
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.aggregate_data_for_timespan', agg_mock),
                 freeze_time("2014-06-11 08:15:43")
         ):
                     foo = pdr.query_data_for_timespan(pdb_mock,
@@ -626,7 +705,7 @@ class Test_query_data_for_timespan:
                                 'node2': {'reports': {'foo': 'bar'}},
                                 'node3': {'reports': {'foo': 'bar'}}
                                 }
-        assert logger_mock.debug.call_count == 6
+        assert logger_mock.debug.call_count == 7
         assert logger_mock.info.call_count == 1
         assert get_metrics_mock.call_count == 1
         assert get_metrics_mock.call_args == mock.call(pdb_mock)
@@ -637,6 +716,10 @@ class Test_query_data_for_timespan:
                                                   mock.call(pdb_mock, node2, start, end),
                                                   mock.call(pdb_mock, node3, start, end)
                                                   ]
+        assert agg_mock.call_count == 1
+        agg_arg = foo
+        agg_arg.pop('aggregate')
+        assert agg_mock.call_args == mock.call(agg_arg)
 
     def test_before_yesterday(self):
         """ simple test of default code path, checking for yesterday's date """
@@ -653,6 +736,7 @@ class Test_query_data_for_timespan:
         get_facts_mock = mock.MagicMock()
         query_node_mock = mock.MagicMock()
         query_node_mock.return_value = {'foo': 'bar'}
+        agg_mock = mock.MagicMock(return_value={})
 
         start = datetime.datetime(2014, 06, 7, hour=4, minute=0, second=0, tzinfo=pytz.utc)
         end = datetime.datetime(2014, 06, 8, hour=3, minute=59, second=59, tzinfo=pytz.utc)
@@ -662,6 +746,7 @@ class Test_query_data_for_timespan:
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_dashboard_metrics', get_metrics_mock),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.get_facts', get_facts_mock),
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_node', query_node_mock),
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.aggregate_data_for_timespan', agg_mock),
                 freeze_time("2014-06-11 08:15:43")
         ):
             foo = pdr.query_data_for_timespan(pdb_mock,
@@ -673,7 +758,7 @@ class Test_query_data_for_timespan:
                                 'node2': {'reports': {'foo': 'bar'}},
                                 'node3': {'reports': {'foo': 'bar'}}
                                 }
-        assert logger_mock.debug.call_count == 5
+        assert logger_mock.debug.call_count == 6
         assert logger_mock.info.call_count == 1
         assert get_metrics_mock.call_count == 0
         assert get_facts_mock.call_count == 0
@@ -682,6 +767,10 @@ class Test_query_data_for_timespan:
                                                   mock.call(pdb_mock, node2, start, end),
                                                   mock.call(pdb_mock, node3, start, end)
                                                   ]
+        assert agg_mock.call_count == 1
+        agg_arg = foo
+        agg_arg.pop('aggregate')
+        assert agg_mock.call_args == mock.call(agg_arg)
 
 
 class Test_query_data_for_node:
@@ -840,69 +929,8 @@ class Test_format_html:
 
     strip_whitespace_re = re.compile(r'\s+')
 
-    dates = ['Tue 06/10',
-             'Mon 06/09',
-             'Sun 06/08',
-             'Sat 06/07',
-             'Fri 06/06',
-             'Thu 06/05',
-             'Wed 06/04'
-             ]
-
-    data = {
-        'Tue 06/10': {
-            'metrics': {'foo': {'formatted': 'foo1'}, 'bar': {'formatted': 'bar1'}, 'baz': {'formatted': 'baz1'}},
-            'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100}, 'facterversion': {'2.0.0': 102, '1.7.2': 1}},
-            'nodes': {
-                'node1.example.com': {
-                    'reports': {
-                        'run_count': 2,
-                        'run_time_total': datetime.timedelta(seconds=1010),
-                        'run_time_max': datetime.timedelta(seconds=1000),
-                        'with_failures': 2,
-                        'with_changes': 2,
-                        'with_skips': 2,
-                    },
-                },
-                'node2.example.com': {
-                    'reports': {
-                        'run_count': 1,
-                        'run_time_total': datetime.timedelta(seconds=100),
-                        'run_time_max': datetime.timedelta(seconds=100),
-                        'with_failures': 1,
-                        'with_changes': 1,
-                        'with_skips': 1,
-                    },
-                },
-                'node2.example.com': {
-                    'reports': {
-                        'run_count': 1,
-                        'run_time_total': datetime.timedelta(seconds=500),
-                        'run_time_max': datetime.timedelta(seconds=500),
-                        'with_failures': 0,
-                        'with_changes': 1,
-                        'with_skips': 0,
-                    },
-                },
-                'node2.example.com': {
-                    'reports': {
-                        'run_count': 5,
-                        'run_time_total': datetime.timedelta(seconds=600),
-                        'run_time_max': datetime.timedelta(seconds=500),
-                        'with_failures': 5,
-                        'with_changes': 0,
-                        'with_skips': 0,
-                    },
-                },
-            },
-        },
-        'Mon 06/09': {'metrics': {'foo': {'formatted': 'foo2'}, 'bar': {'formatted': 'bar2'}, 'baz': {'formatted': 'baz2'}}},
-        'Sun 06/08': {'metrics': {'foo': {'formatted': 'foo3'}, 'bar': {'formatted': 'bar3'}, 'baz': {'formatted': 'baz3'}}},
-        'Sat 06/07': {'metrics': {'foo': {'formatted': 'foo4'}, 'bar': {'formatted': 'bar4'}, 'baz': {'formatted': 'baz4'}}},
-        'Fri 06/06': {'metrics': {'foo': {'formatted': 'foo5'}, 'bar': {'formatted': 'bar5'}, 'baz': {'formatted': 'baz5'}}},
-        'Thu 06/05': {'metrics': {'foo': {'formatted': 'foo6'}, 'bar': {'formatted': 'bar6'}, 'baz': {'formatted': 'baz6'}}},
-        'Wed 06/04': {'foo': 'bar'},
-    }
+    dates = deepcopy(FINAL_DATES)
+    data = deepcopy(FINAL_DATA)
 
     def test_basic(self):
         env_mock = mock.MagicMock(spec=Environment, autospec=True)
@@ -910,6 +938,7 @@ class Test_format_html:
         tmpl_mock = mock.MagicMock(spec=Template, autospec=True)
         tmpl_mock.render.return_value = 'baz'
         env_obj_mock.get_template.return_value = tmpl_mock
+        env_obj_mock.filters = {}
         env_mock.return_value = env_obj_mock
         pl_mock = mock.MagicMock(spec=PackageLoader, autospec=True)
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.Environment', env_mock):
@@ -925,6 +954,8 @@ class Test_format_html:
         assert pl_mock.call_args == mock.call('pypuppetdb_daily_report', 'templates')
         assert env_obj_mock.get_template.call_count == 1
         assert env_obj_mock.get_template.call_args == mock.call('base.html')
+        assert env_obj_mock.filters['reportmetricname'] == pdr.filter_report_metric_name
+        assert env_obj_mock.filters['reportmetricformat'] == pdr.filter_report_metric_format
         assert tmpl_mock.render.call_count == 1
         assert tmpl_mock.render.call_args == mock.call(data=self.data,
                                                        dates=self.dates,
@@ -982,9 +1013,56 @@ class Test_format_html:
         assert '<html>' in html
         assert '<h2>Report Overview</h2>' in html
         assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
-        assert '<tr><th>Total Reports</th><td>9</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in html
-        assert '<tr><th>With Failures</th><td>8 (89%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in html
-        assert '<tr><th>With Changes</th><td>4 (44%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in html
-        assert '<tr><th>With Skipped Resources</th><td>3 (33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in html
-        assert '<tr><th>Average Runtime</th><td>4m 6s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in html
-        assert '<tr><th>Maximum Runtime</th><td>16m 40s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in html
+        assert '<tr><th>TotalReports</th><td>9</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>WithFailures</th><td>8(89%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>WithChanges</th><td>4(44%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>WithSkippedResources</th><td>3(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>AverageRuntime</th><td>4m5s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>MaximumRuntime</th><td>16m40s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+
+
+class Test_filter_report_metric_name:
+
+    def test_aggregate(self):
+        assert pdr.filter_report_metric_name('with_skips') == 'With Skipped Resources'
+        assert pdr.filter_report_metric_name('run_time_max') == 'Maximum Runtime'
+        assert pdr.filter_report_metric_name('with_failures') == 'With Failures'
+        assert pdr.filter_report_metric_name('with_changes') == 'With Changes'
+        assert pdr.filter_report_metric_name('run_count') == 'Total Reports'
+        assert pdr.filter_report_metric_name('run_time_avg') == 'Average Runtime'
+
+
+class Test_filter_report_metric_format:
+
+    def test_string(self):
+        assert pdr.filter_report_metric_format('foo') == 'foo'
+
+    def test_int(self):
+        assert pdr.filter_report_metric_format(123) == '123'
+
+    def test_timedelta(self):
+        d = datetime.timedelta(seconds=10)
+        assert pdr.filter_report_metric_format(d) == '10s'
+        d = datetime.timedelta(0, 245, 555555)
+        assert pdr.filter_report_metric_format(d) == '4m 5s'
+        d = datetime.timedelta(3, 3661)
+        assert pdr.filter_report_metric_format(d) == '3d 1h 1m 1s'
+        d = datetime.timedelta(0, 3600)
+        assert pdr.filter_report_metric_format(d) == '1h'
+        d = datetime.timedelta(0, 1000)
+        assert pdr.filter_report_metric_format(d) == '16m 40s'
+
+
+class Test_aggregate_data_for_timespan:
+
+    def test_report_counts(self):
+        data = deepcopy(FINAL_DATA['Tue 06/10'])
+        data.pop('aggregate', None)
+        result = pdr.aggregate_data_for_timespan(data)
+        assert result['reports']['run_count'] == 9
+        assert result['reports']['run_time_total'] == datetime.timedelta(seconds=2210)
+        assert result['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
+        assert result['reports']['with_failures'] == 8
+        assert result['reports']['with_changes'] == 4
+        assert result['reports']['with_skips'] == 3
+        assert result['reports']['run_time_avg'] == datetime.timedelta(0, 245, 555555)

@@ -1,0 +1,23 @@
+<!-- begin reports.html -->
+<h2>Report Overview</h2>
+<table border="1">
+<tr><th>&nbsp;</th>{% for date_s in dates %}<th>{{ date_s }}</th>{% endfor %}</tr>
+{% for stat in data[dates[0]].aggregate.reports %}
+  <tr>
+  <th>{{ stat|reportmetricname }}</th>
+  {% for date_s in dates %}
+    <td>
+    {% if 'aggregate' in data[date_s] and 'reports' in data[date_s]['aggregate'] and stat in data[date_s]['aggregate']['reports'] %}
+      {{ data[date_s]['aggregate']['reports'][stat]|reportmetricformat }}
+      {% if stat in ['with_failures', 'with_changes', 'with_skips'] %}
+        {{ '({0:.0%})'.format(data[date_s]['aggregate']['reports'][stat]/data[date_s]['aggregate']['reports']['run_count']) }}
+      {% endif %}
+    {% else %}
+      &nbsp;
+    {% endif %}
+    </td>
+  {% endfor %}
+  </tr>
+{% endfor %}
+</table>
+<!-- end reports.html -->
