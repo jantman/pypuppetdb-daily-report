@@ -1,16 +1,16 @@
-<!-- begin reports.html -->
-<h2>Report Overview</h2>
+<!-- begin nodes.html -->
+<h2>Node Summary</h2>
 <table border="1">
 <tr><th>&nbsp;</th>{% for date_s in dates %}<th>{{ date_s }}</th>{% endfor %}</tr>
-{% for stat in ['run_count', 'with_failures', 'with_changes', 'with_skips', 'run_time_max', 'run_time_avg'] %}
+{% for stat in ['nodes_with_no_report', 'nodes_no_successful_runs', 'nodes_50+_failed'] %}
   <tr>
   <th>{{ stat|reportmetricname }}</th>
   {% for date_s in dates %}
     <td>
     {% if 'aggregate' in data[date_s] and 'reports' in data[date_s]['aggregate'] and stat in data[date_s]['aggregate']['reports'] %}
       {{ data[date_s]['aggregate']['reports'][stat]|reportmetricformat }}
-      {% if stat in ['with_failures', 'with_changes', 'with_skips'] and data[date_s]['aggregate']['reports']['run_count'] > 0 %}
-        {{ '({0:.0%})'.format(data[date_s]['aggregate']['reports'][stat]/data[date_s]['aggregate']['reports']['run_count']) }}
+      {% if data[date_s]['aggregate']['reports']['run_count'] > 0 %}
+        {{ '({0:.0%})'.format(data[date_s]['aggregate']['reports'][stat]/(data[date_s]['nodes']|length)) }}
       {% endif %}
     {% else %}
       &nbsp;
@@ -20,4 +20,4 @@
   </tr>
 {% endfor %}
 </table>
-<!-- end reports.html -->
+<!-- end nodes.html -->

@@ -82,7 +82,7 @@ class Test_template_base:
         html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date)
 
         assert '<h1>daily puppet(db) run summary on foo.example.com for Tue Jun 03, 2014 to Tue Jun 10</h1>' in html
-        assert stripped == '<html><head></head><body><h1>dailypuppet(db)runsummaryonfoo.example.comforTueJun03,2014toTueJun10</h1>=metrics.html==facts.html==reports.html=</body></html>'
+        assert stripped == '<html><head></head><body><h1>dailypuppet(db)runsummaryonfoo.example.comforTueJun03,2014toTueJun10</h1>=metrics.html==facts.html==reports.html==nodes.html=</body></html>'
 
 
 class Test_template_metrics:
@@ -161,7 +161,6 @@ class Test_template_reports:
         assert '<tr><th>WithSkippedResources</th><td>3(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
         assert '<tr><th>AverageRuntime</th><td>4m5s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
         assert '<tr><th>MaximumRuntime</th><td>16m40s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>NodesWithNoReport</th><td>1</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
 
     def test_no_runs(self):
         """ test a node with no runs """
@@ -195,7 +194,6 @@ class Test_template_nodes:
     data = deepcopy(test_data.FINAL_DATA)
     template_name = 'nodes.html'
 
-    @pytest.mark.skipif(1 == 1, reason='not implemented yet')
     def test_run_node_counts(self):
         sg = SourceGetter(self.template_name)
         tmp_src_mock = sg.get_mock()
@@ -207,20 +205,10 @@ class Test_template_nodes:
         end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
 
         html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date)
-
-        html = pdr.format_html('foo.example.com',
-                               self.dates,
-                               self.data,
-                               datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
-                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
-                               )
-        stripped = strip_whitespace_re.sub('', html)
-        assert '<html>' in html
+        s = stripped.replace('</tr>', "</tr>\n")
+        print(s)
         assert '<h2>Node Summary</h2>' in html
         assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
-        assert '<tr><th>TotalNodes</th><td>10</td><td>8</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>100%FailedRuns</th><td>1(10%)</td><td>4(50%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>50%+FailedRuns</th><td>4(40%)</td><td>0</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>AnyFailedRuns</th><td>2(20%)</td><td>2(25%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>LessThan40Reports</th><td>1(10%)</td><td>0</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>WithChanges</th><td>5(50%)</td><td>6(75%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>NodesWith100%FailedRuns</th><td>4(67%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>NodesWith50-100%FailedRuns</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>NodesWithNoReport</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped

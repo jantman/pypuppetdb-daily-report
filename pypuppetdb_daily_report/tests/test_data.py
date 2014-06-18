@@ -85,6 +85,8 @@ FINAL_DATA = {
                 'run_time_total': datetime.timedelta(0, 2210),
                 'run_time_avg': datetime.timedelta(0, 245, 555555),
                 'nodes_with_no_report': 1,
+                'nodes_no_successful_runs': 4,
+                'nodes_50+_failed': 1,
             },
         },
     },

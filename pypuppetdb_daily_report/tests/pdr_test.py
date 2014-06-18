@@ -865,6 +865,8 @@ class Test_filter_report_metric_name:
         assert pdr.filter_report_metric_name('run_count') == 'Total Reports'
         assert pdr.filter_report_metric_name('run_time_avg') == 'Average Runtime'
         assert pdr.filter_report_metric_name('nodes_with_no_report') == 'Nodes With No Report'
+        assert pdr.filter_report_metric_name('nodes_no_successful_runs') == 'Nodes With 100% Failed Runs'
+        assert pdr.filter_report_metric_name('nodes_50+_failed') == 'Nodes With 50-100% Failed Runs'
 
 
 class Test_filter_report_metric_format:
@@ -905,13 +907,14 @@ class Test_aggregate_data_for_timespan:
         assert result['reports']['with_skips'] == 10
         assert result['reports']['run_time_avg'].days == 0
         assert result['reports']['run_time_avg'].seconds == 121
-        assert result['reports']['nodes_with_no_report'] == 1
 
-    @pytest.mark.skip(1 == 1, reason='not implemented')
     def test_node_counts(self):
         data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
         data.pop('aggregate', None)
-        data['nodes'] = deepcopy(test_data.NODE_AGGR_NODES)
+        result = pdr.aggregate_data_for_timespan(data)
+        assert result['reports']['nodes_with_no_report'] == 1
+        assert result['reports']['nodes_no_successful_runs'] == 4
+        assert result['reports']['nodes_50+_failed'] == 1
 
     def test_report_counts_divzero(self):
         data = {
@@ -937,6 +940,8 @@ class Test_aggregate_data_for_timespan:
         assert result['reports']['with_skips'] == 0
         assert result['reports']['run_time_avg'] == datetime.timedelta()
         assert result['reports']['nodes_with_no_report'] == 1
+        assert result['reports']['nodes_no_successful_runs'] == 1
+        assert result['reports']['nodes_50+_failed'] == 0
 
     def test_report_counts_empty_node(self):
         data = {
