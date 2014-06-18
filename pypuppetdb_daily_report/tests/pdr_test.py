@@ -916,6 +916,8 @@ class Test_aggregate_data_for_timespan:
         assert result['nodes']['with_no_successful_runs'] == 4
         assert result['nodes']['with_50+%_failed'] == 1
         assert result['nodes']['with_too_few_runs'] == 4
+        assert result['nodes']['with_changes'] == 4
+        assert result['nodes']['with_skips'] == 3
 
     def test_report_counts_divzero(self):
         data = {
@@ -978,6 +980,9 @@ class Test_aggregate_data_for_timespan:
         assert result['nodes']['with_no_report'] == 1
         assert result['nodes']['with_no_successful_runs'] == 1
         assert result['nodes']['with_50+%_failed'] == 0
+        assert result['nodes']['with_changes'] == 0
+        assert result['nodes']['with_skips'] == 0
+        assert result['nodes']['with_too_few_runs'] == 1
 
     def test_node_counts_empty_node(self):
         data = {
@@ -990,6 +995,11 @@ class Test_aggregate_data_for_timespan:
         }
         result = pdr.aggregate_data_for_timespan(data)
         assert result['nodes']['with_no_report'] == 2
+        assert result['nodes']['with_no_successful_runs'] == 2
+        assert result['nodes']['with_50+%_failed'] == 0
+        assert result['nodes']['with_changes'] == 0
+        assert result['nodes']['with_skips'] == 0
+        assert result['nodes']['with_too_few_runs'] == 0
 
 
 class Test_format_html:
