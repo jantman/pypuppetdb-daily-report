@@ -945,3 +945,42 @@ class Test_aggregate_data_for_timespan:
         assert result['reports']['with_skips'] == 0
         assert result['reports']['run_time_avg'] == datetime.timedelta()
         assert result['reports']['nodes_with_no_report'] == 2
+
+
+class Test_format_html:
+
+    dates = deepcopy(test_data.FINAL_DATES)
+    data = deepcopy(test_data.FINAL_DATA)
+
+    def test_basic(self):
+        env_mock = mock.MagicMock(spec=Environment, autospec=True)
+        env_obj_mock = mock.MagicMock(spec=Environment, autospec=True)
+        tmpl_mock = mock.MagicMock(spec=Template, autospec=True)
+        tmpl_mock.render.return_value = 'baz'
+        env_obj_mock.get_template.return_value = tmpl_mock
+        env_obj_mock.filters = {}
+        env_mock.return_value = env_obj_mock
+        pl_mock = mock.MagicMock(spec=PackageLoader, autospec=True)
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.Environment', env_mock), \
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.PackageLoader', pl_mock):
+            html = pdr.format_html('foo.example.com',
+                                   self.dates,
+                                   self.data,
+                                   datetime.datetime(2014, 6, 3, 0, 0, 0, tzinfo=pytz.utc),
+                                   datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+                                   )
+        assert env_mock.call_count == 1
+        assert pl_mock.call_count == 1
+        assert pl_mock.call_args == mock.call('pypuppetdb_daily_report', 'templates')
+        assert env_obj_mock.get_template.call_count == 1
+        assert env_obj_mock.get_template.call_args == mock.call('base.html')
+        assert env_obj_mock.filters['reportmetricname'] == pdr.filter_report_metric_name
+        assert env_obj_mock.filters['reportmetricformat'] == pdr.filter_report_metric_format
+        assert tmpl_mock.render.call_count == 1
+        assert tmpl_mock.render.call_args == mock.call(data=self.data,
+                                                       dates=self.dates,
+                                                       hostname='foo.example.com',
+                                                       start=datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+                                                       end=datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+                                                       )
+        assert html == 'baz'
