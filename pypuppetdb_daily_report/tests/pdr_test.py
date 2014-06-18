@@ -813,7 +813,7 @@ class Test_query_data_for_node:
         assert foo['resources']['failed'][('Package', 'libsmbios')] == 1
         assert foo['resources']['skipped'][('Augeas', 'disable dell yum plugin once OM is installed')] == 1
         assert foo['resources']['changed'][('Exec', 'zookeeper ensemble check')] == 1
-        assert foo['resources']['changed'][('Service', 'winbin')] == 1
+        assert foo['resources']['changed'][('Service', 'winbind')] == 1
         assert foo['resources']['changed'][('Service', 'zookeeper-server')] == 2
 
 
@@ -929,18 +929,29 @@ class Test_aggregate_data_for_timespan:
     def test_resource_counts(self):
         data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
         data.pop('aggregate', None)
+
+        expected = {
+            'changed': {
+                (u'Exec', u'zookeeper ensemble check'): 1,
+                (u'Service', u'winbind'): 2,
+                (u'Service', u'zookeeper-server'): 2,
+            },
+            'failed': {
+                (u'Exec', u'zookeeper ensemble check'): 1,
+                (u'Package', u'libsmbios'): 2,
+                (u'Package', u'srvadmin-idrac7'): 2,
+            },
+            'skipped': {
+                (u'Augeas', u'disable dell yum plugin once OM is installed'): 2,
+                (u'Exec', u'zookeeper ensemble check'): 1,
+                (u'Service', u'dataeng'): 1,
+            },
+        }
+
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
             result = pdr.aggregate_data_for_timespan(data)
-        assert 0 == 1
-        """
-        assert foo['resources']['failed'][('Package', 'srvadmin-idrac7')] == 2
-        assert foo['resources']['skipped'][('Service', 'dataeng')] == 1
-        assert foo['resources']['failed'][('Package', 'libsmbios')] == 1
-        assert foo['resources']['skipped'][('Augeas', 'disable dell yum plugin once OM is installed')] == 1
-        assert foo['resources']['changed'][('Exec', 'zookeeper ensemble check')] == 1
-        assert foo['resources']['changed'][('Service', 'winbin')] == 1
-        assert foo['resources']['changed'][('Service', 'zookeeper-server')] == 2
-        """
+
+        assert result['resources'] == expected
 
     def test_report_counts_divzero(self):
         data = {
