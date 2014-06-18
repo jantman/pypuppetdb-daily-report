@@ -188,9 +188,7 @@ class Test_console_entry_point:
         opts_o.host = 'foobar'
         opts_o.verbose = 1
         parse_args_mock.return_value = opts_o
-
         logger_mock = mock.MagicMock()
-
         main_mock = mock.MagicMock()
 
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.parse_args', parse_args_mock), \
@@ -209,9 +207,7 @@ class Test_console_entry_point:
         opts_o.host = 'foobar'
         opts_o.verbose = 2
         parse_args_mock.return_value = opts_o
-
         logger_mock = mock.MagicMock()
-
         main_mock = mock.MagicMock()
 
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.parse_args', parse_args_mock), \
@@ -434,6 +430,7 @@ class Test_get_data_for_timespan:
 class Test_main:
     """ tests for main() function """
 
+    # TODO: refactor this test
     def test_default(self):
         """ as default as possible, one test """
         data = {'Fri 06/06': {'foo': 'bar'},
@@ -591,6 +588,7 @@ class Test_send_mail:
 
 class Test_query_data_for_timespan:
 
+    # TODO: refactor this test
     def test_yesterday(self):
         """ simple test of default code path, checking for yesterday's date """
         node1 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
@@ -643,6 +641,7 @@ class Test_query_data_for_timespan:
         agg_arg.pop('aggregate')
         assert agg_mock.call_args == mock.call(agg_arg)
 
+    # TODO: refactor this test
     def test_before_yesterday(self):
         """ simple test of default code path, checking for yesterday's date """
         node1 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
@@ -776,7 +775,7 @@ class Test_query_data_for_node:
                                                u'successes': 1,
                                                u'subject-type': u'certname',
                                                u'failures': 2,
-                                               u'subject': {u'title': u'node1.example.com'}}
+                                               u'subject': {u'title': u'node1.example.com'}},
                                               ]
 
         start = datetime.datetime(2014, 6, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc)
@@ -844,6 +843,7 @@ class Test_get_facts:
         assert foo == expected
 
 
+# TODO: refactor this test
 class Test_format_html:
 
     strip_whitespace_re = re.compile(r'\s+')
@@ -1032,6 +1032,7 @@ class Test_aggregate_data_for_timespan:
         assert result['reports']['run_time_avg'].seconds == 245
         assert result['reports']['nodes_with_no_report'] == 1
 
+    @pytest.mark.skip(1 == 1, reason='not implemented')
     def test_node_counts(self):
         data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
         data.pop('aggregate', None)
