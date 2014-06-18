@@ -56,6 +56,7 @@ logger = logging.getLogger(__name__)
 # these will probably be made configurable in the future
 TOP_MODULES_COUNT = 10
 TOP_RESOURCES_COUNT = 10
+RUNS_PER_DAY = 40
 FACTS = ['puppetversion', 'facterversion', 'lsbdistdescription']
 
 
@@ -145,7 +146,10 @@ def filter_report_metric_name(s):
                     'run_count': 'Total Reports',
                     'run_time_total': 'Total Runtime',
                     'run_time_avg': 'Average Runtime',
-                    'nodes_with_no_report': 'Nodes With No Report',
+                    'with_no_report': 'With No Report',
+                    'with_no_successful_runs': 'With 100% Failed Runs',
+                    'with_50+%_failed': 'With 50-100% Failed Runs',
+                    'with_too_few_runs': 'With <{n} Runs in 24h'.format(n=RUNS_PER_DAY),
                     }
     return metric_names.get(s, s)
 
@@ -271,26 +275,50 @@ def aggregate_data_for_timespan(data):
                       'with_failures': 0,
                       'with_changes': 0,
                       'with_skips': 0,
-                      'nodes_with_no_report': 0,
                       }
+    res['nodes'] = {'with_failures': 0,
+                    'with_changes': 0,
+                    'with_skips': 0,
+                    'with_no_report': 0,
+                    'with_no_successful_runs': 0,
+                    'with_50+%_failed': 0,
+                    'with_too_few_runs': 0,
+                    }
     for node in data['nodes']:
         if 'reports' not in data['nodes'][node]:
-            res['reports']['nodes_with_no_report'] += 1
+            res['nodes']['with_no_report'] += 1
+            res['nodes']['with_no_successful_runs'] += 1
             continue
         if 'run_count' not in data['nodes'][node]['reports']:
-            res['reports']['nodes_with_no_report'] += 1
+            res['nodes']['with_no_report'] += 1
+            res['nodes']['with_no_successful_runs'] += 1
             continue
+
+        failpct = 0
+        if data['nodes'][node]['reports']['run_count'] > 0:
+            failpct = float(data['nodes'][node]['reports']['with_failures']) / float(data['nodes'][node]['reports']['run_count'])
+
+        if data['nodes'][node]['reports']['run_count'] < RUNS_PER_DAY:
+            res['nodes']['with_too_few_runs'] += 1
+
         if data['nodes'][node]['reports']['run_count'] == 0:
-            res['reports']['nodes_with_no_report'] += 1
+            res['nodes']['with_no_report'] += 1
+            res['nodes']['with_no_successful_runs'] += 1
+        elif data['nodes'][node]['reports']['with_failures'] == data['nodes'][node]['reports']['run_count']:
+            res['nodes']['with_no_successful_runs'] += 1
+        elif failpct >= 0.5 and failpct < 1.0:
+            res['nodes']['with_50+%_failed'] += 1
+
         for key in ['run_count', 'with_failures', 'with_changes', 'with_skips']:
             if key in data['nodes'][node]['reports']:
                 res['reports'][key] += data['nodes'][node]['reports'][key]
+            if key in data['nodes'][node]['reports'] and key in res['nodes'] and data['nodes'][node]['reports'][key] > 0:
+                res['nodes'][key] += 1
+
         if 'run_time_total' in data['nodes'][node]['reports']:
             res['reports']['run_time_total'] = res['reports']['run_time_total'] + data['nodes'][node]['reports']['run_time_total']
         if 'run_time_max' in data['nodes'][node]['reports'] and data['nodes'][node]['reports']['run_time_max'] > res['reports']['run_time_max']:
             res['reports']['run_time_max'] = data['nodes'][node]['reports']['run_time_max']
-    print("run_time_total={r}".format(r=res['reports']['run_time_total']))
-    print("run_count={r}".format(r=res['reports']['run_count']))
     if res['reports']['run_count'] != 0:
         res['reports']['run_time_avg'] = res['reports']['run_time_total'] / res['reports']['run_count']
     logger.debug("aggregation done, returning result")
@@ -355,14 +383,25 @@ def query_data_for_node(pdb, node, start, end):
         if rep.run_time > res['reports']['run_time_max']:
             res['reports']['run_time_max'] = rep.run_time
         query_s = '["=", "report", "{hash_}"]'.format(hash_=rep.hash_)
-        events = pdb.event_counts(query_s, summarize_by='certname')
+        events = pdb.events(query_s)
+        # increment per-report counters
+        skips = 0
+        successes = 0
+        failures = 0
         for e in events:
-            if e['skips'] > 0:
-                res['reports']['with_skips'] += 1
-            if e['successes'] > 0:
-                res['reports']['with_changes'] += 1
-            if e['failures'] > 0:
-                res['reports']['with_failures'] += 1
+            if e.status == 'skipped':
+                skips += 1
+            elif e.status == 'success':
+                successes += 1
+            elif e.status == 'failure':
+                failures += 1
+        # increment per-node counters for this report
+        if skips > 0:
+            res['reports']['with_skips'] += 1
+        if successes > 0:
+            res['reports']['with_changes'] += 1
+        if failures > 0:
+            res['reports']['with_failures'] += 1
 
     logger.debug("got {num} reports for node".format(num=len(res['reports'])))
 

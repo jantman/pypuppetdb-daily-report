@@ -38,6 +38,7 @@ from freezegun.api import FakeDatetime
 from requests.exceptions import HTTPError
 import pypuppetdb
 from jinja2 import Environment, PackageLoader, Template
+from jinja2.loaders import split_template_path
 import pytz
 import pprint
 from copy import deepcopy
@@ -188,9 +189,7 @@ class Test_console_entry_point:
         opts_o.host = 'foobar'
         opts_o.verbose = 1
         parse_args_mock.return_value = opts_o
-
         logger_mock = mock.MagicMock()
-
         main_mock = mock.MagicMock()
 
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.parse_args', parse_args_mock), \
@@ -209,9 +208,7 @@ class Test_console_entry_point:
         opts_o.host = 'foobar'
         opts_o.verbose = 2
         parse_args_mock.return_value = opts_o
-
         logger_mock = mock.MagicMock()
-
         main_mock = mock.MagicMock()
 
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.parse_args', parse_args_mock), \
@@ -434,6 +431,7 @@ class Test_get_data_for_timespan:
 class Test_main:
     """ tests for main() function """
 
+    # TODO: refactor this test
     def test_default(self):
         """ as default as possible, one test """
         data = {'Fri 06/06': {'foo': 'bar'},
@@ -506,8 +504,6 @@ class Test_main:
                       FakeDatetime(2014, 6, 11, 3, 59, 59, tzinfo=pytz.utc),
                       FakeDatetime(2014, 6, 4, 4, 0, 0, tzinfo=pytz.utc)
                       )
-        pprint.pprint(r)
-        pprint.pprint(format_html_mock.call_args)
         assert format_html_mock.call_args == r
         assert send_mail_mock.call_count == 1
         assert send_mail_mock.call_args == mock.call('foo bar baz', dry_run=False)
@@ -591,6 +587,7 @@ class Test_send_mail:
 
 class Test_query_data_for_timespan:
 
+    # TODO: refactor this test
     def test_yesterday(self):
         """ simple test of default code path, checking for yesterday's date """
         node1 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
@@ -643,6 +640,7 @@ class Test_query_data_for_timespan:
         agg_arg.pop('aggregate')
         assert agg_mock.call_args == mock.call(agg_arg)
 
+    # TODO: refactor this test
     def test_before_yesterday(self):
         """ simple test of default code path, checking for yesterday's date """
         node1 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
@@ -750,11 +748,11 @@ class Test_query_data_for_node:
         assert foo['reports']['run_count'] == 4
         assert foo['reports']['run_time_total'] == datetime.timedelta(seconds=1111)
         assert foo['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
-        assert pdb_mock.event_counts.call_args_list == [mock.call('["=", "report", "hash3"]', summarize_by='certname'),
-                                                        mock.call('["=", "report", "hash4"]', summarize_by='certname'),
-                                                        mock.call('["=", "report", "hash5"]', summarize_by='certname'),
-                                                        mock.call('["=", "report", "hash6"]', summarize_by='certname')
-                                                        ]
+        assert pdb_mock.events.call_args_list == [mock.call('["=", "report", "hash3"]'),
+                                                  mock.call('["=", "report", "hash4"]'),
+                                                  mock.call('["=", "report", "hash5"]'),
+                                                  mock.call('["=", "report", "hash6"]')
+                                                  ]
 
     def test_iterate_events(self):
         """ test iterating over events """
@@ -770,14 +768,21 @@ class Test_query_data_for_node:
         r2.start = datetime.datetime(2014, 6, 10, hour=5, minute=10, second=2, tzinfo=pytz.utc)
         r2.run_time = datetime.timedelta(seconds=10)
         r2.hash_ = 'hash2'
-        node_mock.reports.return_value = [r1, r2]
-        pdb_mock.event_counts.return_value = [{u'noops': 4,
-                                               u'skips': 3,
-                                               u'successes': 1,
-                                               u'subject-type': u'certname',
-                                               u'failures': 2,
-                                               u'subject': {u'title': u'node1.example.com'}}
-                                              ]
+        r3 = mock.MagicMock()
+        r3.start = datetime.datetime(2014, 6, 10, hour=5, minute=11, second=2, tzinfo=pytz.utc)
+        r3.run_time = datetime.timedelta(seconds=10)
+        r3.hash_ = 'hash3'
+        r4 = mock.MagicMock()
+        r4.start = datetime.datetime(2014, 6, 10, hour=5, minute=12, second=2, tzinfo=pytz.utc)
+        r4.run_time = datetime.timedelta(seconds=10)
+        r4.hash_ = 'hash4'
+        node_mock.reports.return_value = [r1, r2, r3, r4]
+
+        event_data = deepcopy(test_data.EVENT_DATA)
+
+        def event_se(query):
+            return event_data.get(query, [])
+        pdb_mock.events.side_effect = event_se
 
         start = datetime.datetime(2014, 6, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc)
         end = datetime.datetime(2014, 6, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc)
@@ -790,17 +795,19 @@ class Test_query_data_for_node:
                                           )
         assert node_mock.reports.call_count == 1
         assert logger_mock.debug.call_count == 2
-        assert foo['reports']['run_count'] == 2
-        assert foo['reports']['run_time_total'] == datetime.timedelta(seconds=1010)
+        assert pdb_mock.event_counts.call_count == 0
+        assert pdb_mock.events.call_count == 4
+        assert pdb_mock.events.call_args_list == [mock.call('["=", "report", "hash1"]'),
+                                                  mock.call('["=", "report", "hash2"]'),
+                                                  mock.call('["=", "report", "hash3"]'),
+                                                  mock.call('["=", "report", "hash4"]'),
+                                                  ]
+        assert foo['reports']['run_count'] == 4
+        assert foo['reports']['run_time_total'] == datetime.timedelta(seconds=1030)
         assert foo['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
-        assert pdb_mock.event_counts.call_count == 2
-        assert pdb_mock.event_counts.call_args_list == [mock.call('["=", "report", "hash1"]', summarize_by='certname'),
-                                                        mock.call('["=", "report", "hash2"]', summarize_by='certname'),
-                                                        ]
-        print(logger_mock.debug.call_args_list)
         assert foo['reports']['with_failures'] == 2
         assert foo['reports']['with_changes'] == 2
-        assert foo['reports']['with_skips'] == 2
+        assert foo['reports']['with_skips'] == 1
 
 
 class Test_get_facts:
@@ -845,9 +852,157 @@ class Test_get_facts:
         assert foo == expected
 
 
-class Test_format_html:
+class Test_filter_report_metric_name:
 
-    strip_whitespace_re = re.compile(r'\s+')
+    def test_aggregate(self):
+        assert pdr.filter_report_metric_name('with_skips') == 'With Skipped Resources'
+        assert pdr.filter_report_metric_name('run_time_max') == 'Maximum Runtime'
+        assert pdr.filter_report_metric_name('with_failures') == 'With Failures'
+        assert pdr.filter_report_metric_name('with_changes') == 'With Changes'
+        assert pdr.filter_report_metric_name('run_count') == 'Total Reports'
+        assert pdr.filter_report_metric_name('run_time_avg') == 'Average Runtime'
+        assert pdr.filter_report_metric_name('with_no_report') == 'With No Report'
+        assert pdr.filter_report_metric_name('with_no_successful_runs') == 'With 100% Failed Runs'
+        assert pdr.filter_report_metric_name('with_50+%_failed') == 'With 50-100% Failed Runs'
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 9):
+            assert pdr.filter_report_metric_name('with_too_few_runs') == 'With <9 Runs in 24h'
+
+
+class Test_filter_report_metric_format:
+
+    def test_string(self):
+        assert pdr.filter_report_metric_format('foo') == 'foo'
+
+    def test_int(self):
+        assert pdr.filter_report_metric_format(123) == '123'
+
+    def test_timedelta(self):
+        d = datetime.timedelta(seconds=10)
+        assert pdr.filter_report_metric_format(d) == '10s'
+        d = datetime.timedelta(0, 245, 555555)
+        assert pdr.filter_report_metric_format(d) == '4m 5s'
+        d = datetime.timedelta(3, 3661)
+        assert pdr.filter_report_metric_format(d) == '3d 1h 1m 1s'
+        d = datetime.timedelta(0, 3600)
+        assert pdr.filter_report_metric_format(d) == '1h'
+        d = datetime.timedelta(0, 1000)
+        assert pdr.filter_report_metric_format(d) == '16m 40s'
+
+    def test_other(self):
+        assert pdr.filter_report_metric_format(123.1) == '123.1'
+
+
+class Test_aggregate_data_for_timespan:
+
+    def test_report_counts(self):
+        data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
+        data.pop('aggregate', None)
+        result = pdr.aggregate_data_for_timespan(data)
+        assert result['reports']['run_count'] == 19
+        assert result['reports']['run_time_total'] == datetime.timedelta(seconds=2310)
+        assert result['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
+        assert result['reports']['with_failures'] == 15
+        assert result['reports']['with_changes'] == 6
+        assert result['reports']['with_skips'] == 10
+        assert result['reports']['run_time_avg'].days == 0
+        assert result['reports']['run_time_avg'].seconds == 121
+
+    def test_node_counts(self):
+        data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
+        data.pop('aggregate', None)
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
+            result = pdr.aggregate_data_for_timespan(data)
+        assert result['nodes']['with_no_report'] == 1
+        assert result['nodes']['with_no_successful_runs'] == 4
+        assert result['nodes']['with_50+%_failed'] == 1
+        assert result['nodes']['with_too_few_runs'] == 4
+        assert result['nodes']['with_changes'] == 4
+        assert result['nodes']['with_skips'] == 3
+
+    def test_report_counts_divzero(self):
+        data = {
+            'nodes': {
+                'node1.example.com': {
+                    'reports': {
+                        'run_count': 0,
+                        'run_time_total': datetime.timedelta(),
+                        'run_time_max': datetime.timedelta(),
+                        'with_failures': 0,
+                        'with_changes': 0,
+                        'with_skips': 0,
+                    },
+                },
+            },
+        }
+        result = pdr.aggregate_data_for_timespan(data)
+        assert result['reports']['run_count'] == 0
+        assert result['reports']['run_time_total'] == datetime.timedelta()
+        assert result['reports']['run_time_max'] == datetime.timedelta()
+        assert result['reports']['with_failures'] == 0
+        assert result['reports']['with_changes'] == 0
+        assert result['reports']['with_skips'] == 0
+        assert result['reports']['run_time_avg'] == datetime.timedelta()
+
+    def test_report_counts_empty_node(self):
+        data = {
+            'nodes': {
+                'node1.example.com': {
+                    'reports': {},
+                },
+                'node2.example.com': {},
+            },
+        }
+        result = pdr.aggregate_data_for_timespan(data)
+        assert result['reports']['run_count'] == 0
+        assert result['reports']['run_time_total'] == datetime.timedelta()
+        assert result['reports']['run_time_max'] == datetime.timedelta()
+        assert result['reports']['with_failures'] == 0
+        assert result['reports']['with_changes'] == 0
+        assert result['reports']['with_skips'] == 0
+        assert result['reports']['run_time_avg'] == datetime.timedelta()
+
+    def test_node_counts_divzero(self):
+        data = {
+            'nodes': {
+                'node1.example.com': {
+                    'reports': {
+                        'run_count': 0,
+                        'run_time_total': datetime.timedelta(),
+                        'run_time_max': datetime.timedelta(),
+                        'with_failures': 0,
+                        'with_changes': 0,
+                        'with_skips': 0,
+                    },
+                },
+            },
+        }
+        result = pdr.aggregate_data_for_timespan(data)
+        assert result['nodes']['with_no_report'] == 1
+        assert result['nodes']['with_no_successful_runs'] == 1
+        assert result['nodes']['with_50+%_failed'] == 0
+        assert result['nodes']['with_changes'] == 0
+        assert result['nodes']['with_skips'] == 0
+        assert result['nodes']['with_too_few_runs'] == 1
+
+    def test_node_counts_empty_node(self):
+        data = {
+            'nodes': {
+                'node1.example.com': {
+                    'reports': {},
+                },
+                'node2.example.com': {},
+            },
+        }
+        result = pdr.aggregate_data_for_timespan(data)
+        assert result['nodes']['with_no_report'] == 2
+        assert result['nodes']['with_no_successful_runs'] == 2
+        assert result['nodes']['with_50+%_failed'] == 0
+        assert result['nodes']['with_changes'] == 0
+        assert result['nodes']['with_skips'] == 0
+        assert result['nodes']['with_too_few_runs'] == 0
+
+
+class Test_format_html:
 
     dates = deepcopy(test_data.FINAL_DATES)
     data = deepcopy(test_data.FINAL_DATA)
@@ -884,179 +1039,3 @@ class Test_format_html:
                                                        end=datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
                                                        )
         assert html == 'baz'
-
-    def test_body(self):
-        html = pdr.format_html('foo.example.com',
-                               self.dates,
-                               self.data,
-                               datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
-                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
-                               )
-        assert '<html>' in html
-        assert '<h1>daily puppet(db) run summary on foo.example.com for Tue Jun 03, 2014 to Tue Jun 10</h1>' in html
-
-    def test_metrics(self):
-        html = pdr.format_html('foo.example.com',
-                               self.dates,
-                               self.data,
-                               datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
-                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
-                               )
-        stripped = self.strip_whitespace_re.sub('', html)
-        assert '<html>' in html
-        assert '<tr><th>Metric</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
-        assert '<tr><th>bar</th><td>' in stripped
-        assert '<tr><th>baz</th><td>' in stripped
-        assert '<tr><th>foo</th><td>foo1</td><td>foo2</td><td>foo3</td><td>foo4</td><td>foo5</td><td>foo6</td><td>&nbsp;</td></tr>' in stripped
-
-    def test_facts(self):
-        html = pdr.format_html('foo.example.com',
-                               self.dates,
-                               self.data,
-                               datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
-                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
-                               )
-        stripped = self.strip_whitespace_re.sub('', html)
-        assert '<html>' in html
-        assert '<h2>Fact Values</h2>' in html
-        assert '<tr><th>Fact</th><th>Value</th><th>Count</th></tr>' in html
-        assert '<tr><throwspan="2">facterversion</th><td>1.7.2</td><td>1</td></tr><tr><td>2.0.0</td><td>102</td></tr><tr><throwspan="3">puppetversion' in stripped
-
-    def test_run_overview(self):
-        html = pdr.format_html('foo.example.com',
-                               self.dates,
-                               self.data,
-                               datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
-                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
-                               )
-        stripped = self.strip_whitespace_re.sub('', html)
-        assert '<html>' in html
-        assert '<h2>Report Overview</h2>' in html
-        assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
-        assert '<tr><th>TotalReports</th><td>9</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>WithFailures</th><td>8(89%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>WithChanges</th><td>4(44%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>WithSkippedResources</th><td>3(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>AverageRuntime</th><td>4m5s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>MaximumRuntime</th><td>16m40s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>NodesWithNoReport</th><td>1</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-
-    def test_no_runs(self):
-        data = deepcopy(test_data.FINAL_DATA)
-        foo = data['Tue 06/10']['nodes']['node5.example.com']
-        data['Tue 06/10']['nodes'] = {'node5.example.com': foo}
-        data['Tue 06/10']['aggregate']['reports'] = {'run_count': 0,
-                                                     'with_failures': 0,
-                                                     'with_changes': 0,
-                                                     'with_skips': 0,
-                                                     'run_time_total': datetime.timedelta(),
-                                                     'run_time_max': datetime.timedelta()
-                                                     }
-        html = pdr.format_html('foo.example.com',
-                               self.dates,
-                               data,
-                               datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
-                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
-                               )
-        assert '<html>' in html
-
-
-class Test_filter_report_metric_name:
-
-    def test_aggregate(self):
-        assert pdr.filter_report_metric_name('with_skips') == 'With Skipped Resources'
-        assert pdr.filter_report_metric_name('run_time_max') == 'Maximum Runtime'
-        assert pdr.filter_report_metric_name('with_failures') == 'With Failures'
-        assert pdr.filter_report_metric_name('with_changes') == 'With Changes'
-        assert pdr.filter_report_metric_name('run_count') == 'Total Reports'
-        assert pdr.filter_report_metric_name('run_time_avg') == 'Average Runtime'
-        assert pdr.filter_report_metric_name('nodes_with_no_report') == 'Nodes With No Report'
-
-
-class Test_filter_report_metric_format:
-
-    def test_string(self):
-        assert pdr.filter_report_metric_format('foo') == 'foo'
-
-    def test_int(self):
-        assert pdr.filter_report_metric_format(123) == '123'
-
-    def test_timedelta(self):
-        d = datetime.timedelta(seconds=10)
-        assert pdr.filter_report_metric_format(d) == '10s'
-        d = datetime.timedelta(0, 245, 555555)
-        assert pdr.filter_report_metric_format(d) == '4m 5s'
-        d = datetime.timedelta(3, 3661)
-        assert pdr.filter_report_metric_format(d) == '3d 1h 1m 1s'
-        d = datetime.timedelta(0, 3600)
-        assert pdr.filter_report_metric_format(d) == '1h'
-        d = datetime.timedelta(0, 1000)
-        assert pdr.filter_report_metric_format(d) == '16m 40s'
-
-    def test_other(self):
-        assert pdr.filter_report_metric_format(123.1) == '123.1'
-
-
-class Test_aggregate_data_for_timespan:
-
-    def test_report_counts(self):
-        data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
-        data.pop('aggregate', None)
-        result = pdr.aggregate_data_for_timespan(data)
-        assert result['reports']['run_count'] == 9
-        assert result['reports']['run_time_total'] == datetime.timedelta(seconds=2210)
-        assert result['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
-        assert result['reports']['with_failures'] == 8
-        assert result['reports']['with_changes'] == 4
-        assert result['reports']['with_skips'] == 3
-        assert result['reports']['run_time_avg'].days == 0
-        assert result['reports']['run_time_avg'].seconds == 245
-        assert result['reports']['nodes_with_no_report'] == 1
-
-    def test_report_counts_divzero(self):
-        data = {
-            'metrics': {'foo': {'formatted': 'foo1'}, 'bar': {'formatted': 'bar1'}, 'baz': {'formatted': 'baz1'}},
-            'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100}, 'facterversion': {'2.0.0': 102, '1.7.2': 1}},
-            'nodes': {
-                'node1.example.com': {
-                    'reports': {
-                        'run_count': 0,
-                        'run_time_total': datetime.timedelta(),
-                        'run_time_max': datetime.timedelta(),
-                        'with_failures': 0,
-                        'with_changes': 0,
-                        'with_skips': 0,
-                    },
-                },
-            },
-        }
-        result = pdr.aggregate_data_for_timespan(data)
-        assert result['reports']['run_count'] == 0
-        assert result['reports']['run_time_total'] == datetime.timedelta()
-        assert result['reports']['run_time_max'] == datetime.timedelta()
-        assert result['reports']['with_failures'] == 0
-        assert result['reports']['with_changes'] == 0
-        assert result['reports']['with_skips'] == 0
-        assert result['reports']['run_time_avg'] == datetime.timedelta()
-        assert result['reports']['nodes_with_no_report'] == 1
-
-    def test_report_counts_empty_node(self):
-        data = {
-            'metrics': {'foo': {'formatted': 'foo1'}, 'bar': {'formatted': 'bar1'}, 'baz': {'formatted': 'baz1'}},
-            'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100}, 'facterversion': {'2.0.0': 102, '1.7.2': 1}},
-            'nodes': {
-                'node1.example.com': {
-                    'reports': { },
-                },
-                'node2.example.com': { },
-            },
-        }
-        result = pdr.aggregate_data_for_timespan(data)
-        assert result['reports']['run_count'] == 0
-        assert result['reports']['run_time_total'] == datetime.timedelta()
-        assert result['reports']['run_time_max'] == datetime.timedelta()
-        assert result['reports']['with_failures'] == 0
-        assert result['reports']['with_changes'] == 0
-        assert result['reports']['with_skips'] == 0
-        assert result['reports']['run_time_avg'] == datetime.timedelta()
-        assert result['reports']['nodes_with_no_report'] == 2

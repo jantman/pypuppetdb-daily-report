@@ -1,0 +1,33 @@
+<!-- begin nodes.html -->
+<h2>Node Summary</h2>
+<table border="1">
+<tr><th>&nbsp;</th>{% for date_s in dates %}<th>{{ date_s }}</th>{% endfor %}</tr>
+  <tr>
+  <th>Count</th>
+  {% for date_s in dates %}
+    {% if (data[date_s]['nodes']|length) > 0 %}
+    <td>{{ data[date_s]['nodes']|length }}</td>
+    {% else %}
+    <td>&nbsp;</td>
+    {% endif %}
+  {% endfor %}
+  </tr>
+{% for stat in ['with_no_report', 'with_no_successful_runs', 'with_50+%_failed', 'with_too_few_runs', 'with_skips', 'with_changes'] %}
+  <tr>
+  <th>{{ stat|reportmetricname }}</th>
+  {% for date_s in dates %}
+    <td>
+    {% if 'aggregate' in data[date_s] and 'nodes' in data[date_s]['aggregate'] and stat in data[date_s]['aggregate']['nodes'] %}
+      {{ data[date_s]['aggregate']['nodes'][stat]|reportmetricformat }}
+      {% if (data[date_s]['nodes']|length) > 0 %}
+        {{ '({0:.0%})'.format(data[date_s]['aggregate']['nodes'][stat]/(data[date_s]['nodes']|length)) }}
+      {% endif %}
+    {% else %}
+      &nbsp;
+    {% endif %}
+    </td>
+  {% endfor %}
+  </tr>
+{% endfor %}
+</table>
+<!-- end nodes.html -->

@@ -32,7 +32,7 @@ And the following for each day in the run interval:
 
   * no successful runs, 50+% failed runs, any failed runs
 
-  * less than X successful runs in 24 hours (default 40, CLI option)
+  * less than 40 successful runs in 24 hours
 
   * count of runs with changed resources
 
