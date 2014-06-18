@@ -750,11 +750,11 @@ class Test_query_data_for_node:
         assert foo['reports']['run_count'] == 4
         assert foo['reports']['run_time_total'] == datetime.timedelta(seconds=1111)
         assert foo['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
-        assert pdb_mock.event_counts.call_args_list == [mock.call('["=", "report", "hash3"]', summarize_by='certname'),
-                                                        mock.call('["=", "report", "hash4"]', summarize_by='certname'),
-                                                        mock.call('["=", "report", "hash5"]', summarize_by='certname'),
-                                                        mock.call('["=", "report", "hash6"]', summarize_by='certname')
-                                                        ]
+        assert pdb_mock.events.call_args_list == [mock.call('["=", "report", "hash3"]'),
+                                                  mock.call('["=", "report", "hash4"]'),
+                                                  mock.call('["=", "report", "hash5"]'),
+                                                  mock.call('["=", "report", "hash6"]')
+                                                  ]
 
     def test_iterate_events(self):
         """ test iterating over events """
@@ -770,14 +770,21 @@ class Test_query_data_for_node:
         r2.start = datetime.datetime(2014, 6, 10, hour=5, minute=10, second=2, tzinfo=pytz.utc)
         r2.run_time = datetime.timedelta(seconds=10)
         r2.hash_ = 'hash2'
-        node_mock.reports.return_value = [r1, r2]
-        pdb_mock.event_counts.return_value = [{u'noops': 4,
-                                               u'skips': 3,
-                                               u'successes': 1,
-                                               u'subject-type': u'certname',
-                                               u'failures': 2,
-                                               u'subject': {u'title': u'node1.example.com'}},
-                                              ]
+        r3 = mock.MagicMock()
+        r3.start = datetime.datetime(2014, 6, 10, hour=5, minute=11, second=2, tzinfo=pytz.utc)
+        r3.run_time = datetime.timedelta(seconds=10)
+        r3.hash_ = 'hash3'
+        r4 = mock.MagicMock()
+        r4.start = datetime.datetime(2014, 6, 10, hour=5, minute=12, second=2, tzinfo=pytz.utc)
+        r4.run_time = datetime.timedelta(seconds=10)
+        r4.hash_ = 'hash4'
+        node_mock.reports.return_value = [r1, r2, r3, r4]
+
+        event_data = deepcopy(test_data.EVENT_DATA)
+
+        def event_se(query):
+            return event_data.get(query, [])
+        pdb_mock.events.side_effect = event_se
 
         start = datetime.datetime(2014, 6, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc)
         end = datetime.datetime(2014, 6, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc)
@@ -790,16 +797,20 @@ class Test_query_data_for_node:
                                           )
         assert node_mock.reports.call_count == 1
         assert logger_mock.debug.call_count == 2
-        assert foo['reports']['run_count'] == 2
-        assert foo['reports']['run_time_total'] == datetime.timedelta(seconds=1010)
+        assert pdb_mock.event_counts.call_count == 0
+        assert pdb_mock.events.call_count == 4
+        print(pdb_mock.events.call_args_list)
+        assert pdb_mock.events.call_args_list == [mock.call('["=", "report", "hash1"]'),
+                                                  mock.call('["=", "report", "hash2"]'),
+                                                  mock.call('["=", "report", "hash3"]'),
+                                                  mock.call('["=", "report", "hash4"]'),
+                                                  ]
+        assert foo['reports']['run_count'] == 4
+        assert foo['reports']['run_time_total'] == datetime.timedelta(seconds=1030)
         assert foo['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
-        assert pdb_mock.event_counts.call_count == 2
-        assert pdb_mock.event_counts.call_args_list == [mock.call('["=", "report", "hash1"]', summarize_by='certname'),
-                                                        mock.call('["=", "report", "hash2"]', summarize_by='certname'),
-                                                        ]
         assert foo['reports']['with_failures'] == 2
         assert foo['reports']['with_changes'] == 2
-        assert foo['reports']['with_skips'] == 2
+        assert foo['reports']['with_skips'] == 1
 
 
 class Test_get_facts:

@@ -355,14 +355,25 @@ def query_data_for_node(pdb, node, start, end):
         if rep.run_time > res['reports']['run_time_max']:
             res['reports']['run_time_max'] = rep.run_time
         query_s = '["=", "report", "{hash_}"]'.format(hash_=rep.hash_)
-        events = pdb.event_counts(query_s, summarize_by='certname')
+        events = pdb.events(query_s)
+        # increment per-report counters
+        skips = 0
+        successes = 0
+        failures = 0
         for e in events:
-            if e['skips'] > 0:
-                res['reports']['with_skips'] += 1
-            if e['successes'] > 0:
-                res['reports']['with_changes'] += 1
-            if e['failures'] > 0:
-                res['reports']['with_failures'] += 1
+            if e['status'] == 'skipped':
+                skips += 1
+            elif e['status'] == 'success':
+                successes += 1
+            elif e['status'] == 'failure':
+                failures += 1
+        # increment per-node counters for this report
+        if skips > 0:
+            res['reports']['with_skips'] += 1
+        if successes > 0:
+            res['reports']['with_changes'] += 1
+        if failures > 0:
+            res['reports']['with_failures'] += 1
 
     logger.debug("got {num} reports for node".format(num=len(res['reports'])))
 
