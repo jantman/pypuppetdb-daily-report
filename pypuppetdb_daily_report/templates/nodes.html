@@ -2,7 +2,7 @@
 <h2>Node Summary</h2>
 <table border="1">
 <tr><th>&nbsp;</th>{% for date_s in dates %}<th>{{ date_s }}</th>{% endfor %}</tr>
-{% for stat in ['nodes_with_no_report', 'nodes_no_successful_runs', 'nodes_50+_failed'] %}
+{% for stat in ['nodes_with_no_report', 'nodes_no_successful_runs', 'nodes_50+_failed', 'nodes_too_few_runs'] %}
   <tr>
   <th>{{ stat|reportmetricname }}</th>
   {% for date_s in dates %}

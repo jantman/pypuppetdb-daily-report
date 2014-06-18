@@ -867,6 +867,8 @@ class Test_filter_report_metric_name:
         assert pdr.filter_report_metric_name('nodes_with_no_report') == 'Nodes With No Report'
         assert pdr.filter_report_metric_name('nodes_no_successful_runs') == 'Nodes With 100% Failed Runs'
         assert pdr.filter_report_metric_name('nodes_50+_failed') == 'Nodes With 50-100% Failed Runs'
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 9):
+            assert pdr.filter_report_metric_name('nodes_too_few_runs') == 'Nodes With <9 Runs'
 
 
 class Test_filter_report_metric_format:
@@ -911,10 +913,12 @@ class Test_aggregate_data_for_timespan:
     def test_node_counts(self):
         data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
         data.pop('aggregate', None)
-        result = pdr.aggregate_data_for_timespan(data)
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
+            result = pdr.aggregate_data_for_timespan(data)
         assert result['reports']['nodes_with_no_report'] == 1
         assert result['reports']['nodes_no_successful_runs'] == 4
         assert result['reports']['nodes_50+_failed'] == 1
+        assert result['reports']['nodes_too_few_runs'] == 4
 
     def test_report_counts_divzero(self):
         data = {

@@ -22,16 +22,17 @@ strip_whitespace_re = re.compile(r'\s+')
 
 def get_html(tmpl_name, src_mock, data, dates, hostname, start_date, end_date):
     with mock.patch('jinja2.loaders.PackageLoader.get_source', src_mock):
-        env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
-        env.filters['reportmetricname'] = pdr.filter_report_metric_name
-        env.filters['reportmetricformat'] = pdr.filter_report_metric_format
-        template = env.get_template(tmpl_name)
-        html = template.render(data=data,
-                               dates=dates,
-                               hostname=hostname,
-                               start=start_date,
-                               end=end_date
-                               )
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 9):
+            env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
+            env.filters['reportmetricname'] = pdr.filter_report_metric_name
+            env.filters['reportmetricformat'] = pdr.filter_report_metric_format
+            template = env.get_template(tmpl_name)
+            html = template.render(data=data,
+                                   dates=dates,
+                                   hostname=hostname,
+                                   start=start_date,
+                                   end=end_date,
+                                   )
     stripped = strip_whitespace_re.sub('', html)
     return (html, stripped)
 
@@ -206,9 +207,9 @@ class Test_template_nodes:
 
         html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date)
         s = stripped.replace('</tr>', "</tr>\n")
-        print(s)
         assert '<h2>Node Summary</h2>' in html
         assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
         assert '<tr><th>NodesWith100%FailedRuns</th><td>4(67%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
         assert '<tr><th>NodesWith50-100%FailedRuns</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
         assert '<tr><th>NodesWithNoReport</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>NodesWith<9Runs</th><td>4(67%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped

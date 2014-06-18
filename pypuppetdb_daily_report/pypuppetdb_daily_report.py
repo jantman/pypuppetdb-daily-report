@@ -56,6 +56,7 @@ logger = logging.getLogger(__name__)
 # these will probably be made configurable in the future
 TOP_MODULES_COUNT = 10
 TOP_RESOURCES_COUNT = 10
+RUNS_PER_DAY = 40
 FACTS = ['puppetversion', 'facterversion', 'lsbdistdescription']
 
 
@@ -148,6 +149,7 @@ def filter_report_metric_name(s):
                     'nodes_with_no_report': 'Nodes With No Report',
                     'nodes_no_successful_runs': 'Nodes With 100% Failed Runs',
                     'nodes_50+_failed': 'Nodes With 50-100% Failed Runs',
+                    'nodes_too_few_runs': 'Nodes With <{n} Runs'.format(n=RUNS_PER_DAY),
                     }
     return metric_names.get(s, s)
 
@@ -276,6 +278,7 @@ def aggregate_data_for_timespan(data):
                       'nodes_with_no_report': 0,
                       'nodes_no_successful_runs': 0,
                       'nodes_50+_failed': 0,
+                      'nodes_too_few_runs': 0,
                       }
     for node in data['nodes']:
         if 'reports' not in data['nodes'][node]:
@@ -290,6 +293,9 @@ def aggregate_data_for_timespan(data):
         failpct = 0
         if data['nodes'][node]['reports']['run_count'] > 0:
             failpct = float(data['nodes'][node]['reports']['with_failures']) / float(data['nodes'][node]['reports']['run_count'])
+
+        if data['nodes'][node]['reports']['run_count'] < RUNS_PER_DAY:
+            res['reports']['nodes_too_few_runs'] += 1
 
         if data['nodes'][node]['reports']['run_count'] == 0:
             res['reports']['nodes_with_no_report'] += 1

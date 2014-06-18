@@ -87,6 +87,7 @@ FINAL_DATA = {
                 'nodes_with_no_report': 1,
                 'nodes_no_successful_runs': 4,
                 'nodes_50+_failed': 1,
+                'nodes_too_few_runs': 4,
             },
         },
     },
