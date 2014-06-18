@@ -897,14 +897,14 @@ class Test_aggregate_data_for_timespan:
         data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
         data.pop('aggregate', None)
         result = pdr.aggregate_data_for_timespan(data)
-        assert result['reports']['run_count'] == 9
-        assert result['reports']['run_time_total'] == datetime.timedelta(seconds=2210)
+        assert result['reports']['run_count'] == 19
+        assert result['reports']['run_time_total'] == datetime.timedelta(seconds=2310)
         assert result['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
-        assert result['reports']['with_failures'] == 8
-        assert result['reports']['with_changes'] == 4
-        assert result['reports']['with_skips'] == 3
+        assert result['reports']['with_failures'] == 15
+        assert result['reports']['with_changes'] == 6
+        assert result['reports']['with_skips'] == 10
         assert result['reports']['run_time_avg'].days == 0
-        assert result['reports']['run_time_avg'].seconds == 245
+        assert result['reports']['run_time_avg'].seconds == 121
         assert result['reports']['nodes_with_no_report'] == 1
 
     @pytest.mark.skip(1 == 1, reason='not implemented')

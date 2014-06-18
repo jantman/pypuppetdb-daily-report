@@ -64,6 +64,16 @@ FINAL_DATA = {
                     'with_skips': 0,
                 },
             },
+            'node6.example.com': {
+                'reports': {
+                    'run_count': 10,
+                    'run_time_total': datetime.timedelta(seconds=100),
+                    'run_time_max': datetime.timedelta(seconds=90),
+                    'with_failures': 7,
+                    'with_changes': 2,
+                    'with_skips': 7,
+                },
+            },
         },
         'aggregate': {
             'reports': {
