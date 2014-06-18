@@ -88,10 +88,10 @@ FINAL_DATA = {
             },
             'nodes': {
                 'with_50+%_failed': 1,
-                'with_changes': 0,
+                'with_changes': 4,
                 'with_no_report': 1,
                 'with_too_few_runs': 4,
-                'with_skips': 0,
+                'with_skips': 3,
                 'with_no_successful_runs': 4,
                 'with_failures': 0,
             },

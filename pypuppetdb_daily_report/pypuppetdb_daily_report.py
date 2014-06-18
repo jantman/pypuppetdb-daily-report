@@ -312,6 +312,8 @@ def aggregate_data_for_timespan(data):
         for key in ['run_count', 'with_failures', 'with_changes', 'with_skips']:
             if key in data['nodes'][node]['reports']:
                 res['reports'][key] += data['nodes'][node]['reports'][key]
+            if key in data['nodes'][node]['reports'] and key in res['nodes'] and data['nodes'][node]['reports'][key] > 0:
+                res['nodes'][key] += 1
 
         if 'run_time_total' in data['nodes'][node]['reports']:
             res['reports']['run_time_total'] = res['reports']['run_time_total'] + data['nodes'][node]['reports']['run_time_total']
