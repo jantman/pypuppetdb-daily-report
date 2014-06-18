@@ -38,9 +38,11 @@ from freezegun.api import FakeDatetime
 from requests.exceptions import HTTPError
 import pypuppetdb
 from jinja2 import Environment, PackageLoader, Template
+from jinja2.loaders import split_template_path
 import pytz
 import pprint
 from copy import deepcopy
+from pkg_resources import DefaultProvider, ResourceManager, get_provider
 
 from pypuppetdb_daily_report import pypuppetdb_daily_report as pdr
 
@@ -1081,3 +1083,51 @@ class Test_aggregate_data_for_timespan:
         assert result['reports']['with_skips'] == 0
         assert result['reports']['run_time_avg'] == datetime.timedelta()
         assert result['reports']['nodes_with_no_report'] == 2
+
+
+class Test_templates:
+
+    strip_whitespace_re = re.compile(r'\s+')
+
+    dates = deepcopy(test_data.FINAL_DATES)
+    data = deepcopy(test_data.FINAL_DATA)
+
+    def test_one(self):
+        data = deepcopy(test_data.NODE_SUMMARY_DATA)
+        template_allowed = 'base.html'
+
+        def template_source(environment, template):
+            if template != template_allowed:
+                return ('={t}='.format(t=template), template, True)
+            package_name = 'pypuppetdb_daily_report'
+            package_path = 'templates'
+            provider = get_provider(package_name)
+            manager = ResourceManager()
+            pieces = split_template_path(template)
+            p = '/'.join((package_path,) + tuple(pieces))
+            filename = provider.get_resource_filename(manager, p)
+            source = provider.get_resource_string(manager, p)
+            return (source.decode('utf-8'), filename, True)
+        tmp_src_mock = mock.MagicMock(spec='jinja2.loaders.PackageLoader.get_source', autospec=True)
+        tmp_src_mock.side_effect = template_source
+        with mock.patch('jinja2.loaders.PackageLoader.get_source', tmp_src_mock):
+            html = pdr.format_html('foo.example.com',
+                                   self.dates,
+                                   data,
+                                   datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+                                   datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+                                   )
+        """
+        env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
+        env.filters['reportmetricname'] = filter_report_metric_name
+        env.filters['reportmetricformat'] = filter_report_metric_format
+        template = env.get_template('base.html')
+        html = template.render(data=date_data,
+                               dates=dates,
+                               hostname=hostname,
+                               start=start_date,
+                               end=end_date
+                               )
+        """
+        stripped = self.strip_whitespace_re.sub('', html)
+        assert stripped == ''
