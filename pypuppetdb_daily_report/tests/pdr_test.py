@@ -797,7 +797,6 @@ class Test_query_data_for_node:
         assert pdb_mock.event_counts.call_args_list == [mock.call('["=", "report", "hash1"]', summarize_by='certname'),
                                                         mock.call('["=", "report", "hash2"]', summarize_by='certname'),
                                                         ]
-        print(logger_mock.debug.call_args_list)
         assert foo['reports']['with_failures'] == 2
         assert foo['reports']['with_changes'] == 2
         assert foo['reports']['with_skips'] == 2
@@ -960,6 +959,7 @@ class Test_format_html:
                                )
         assert '<html>' in html
 
+    @pytest.mark.skipif(1 == 1, reason='not implemented yet')
     def test_run_node_counts(self):
         data = deepcopy(test_data.NODE_SUMMARY_DATA)
         html = pdr.format_html('foo.example.com',
@@ -1039,8 +1039,6 @@ class Test_aggregate_data_for_timespan:
 
     def test_report_counts_divzero(self):
         data = {
-            'metrics': {'foo': {'formatted': 'foo1'}, 'bar': {'formatted': 'bar1'}, 'baz': {'formatted': 'baz1'}},
-            'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100}, 'facterversion': {'2.0.0': 102, '1.7.2': 1}},
             'nodes': {
                 'node1.example.com': {
                     'reports': {
@@ -1066,13 +1064,11 @@ class Test_aggregate_data_for_timespan:
 
     def test_report_counts_empty_node(self):
         data = {
-            'metrics': {'foo': {'formatted': 'foo1'}, 'bar': {'formatted': 'bar1'}, 'baz': {'formatted': 'baz1'}},
-            'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100}, 'facterversion': {'2.0.0': 102, '1.7.2': 1}},
             'nodes': {
                 'node1.example.com': {
-                    'reports': { },
+                    'reports': {},
                 },
-                'node2.example.com': { },
+                'node2.example.com': {},
             },
         }
         result = pdr.aggregate_data_for_timespan(data)
