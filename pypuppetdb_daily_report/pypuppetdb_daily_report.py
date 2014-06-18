@@ -385,11 +385,11 @@ def query_data_for_node(pdb, node, start, end):
         successes = 0
         failures = 0
         for e in events:
-            if e['status'] == 'skipped':
+            if e.status == 'skipped':
                 skips += 1
-            elif e['status'] == 'success':
+            elif e.status == 'success':
                 successes += 1
-            elif e['status'] == 'failure':
+            elif e.status == 'failure':
                 failures += 1
         # increment per-node counters for this report
         if skips > 0:
