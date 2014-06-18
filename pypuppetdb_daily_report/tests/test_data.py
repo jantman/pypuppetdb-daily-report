@@ -98,7 +98,8 @@ NODE_SUMMARY_DATA = {
     'Tue 06/10': {
         'metrics': {'foo': {'formatted': 'foo1'}, 'bar': {'formatted': 'bar1'}, 'baz': {'formatted': 'baz1'}},
         'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100}, 'facterversion': {'2.0.0': 102, '1.7.2': 1}},
-        'nodes': { 'node1.example.com': {
+        'nodes': {
+            'node1.example.com': {
                 'reports': {
                     'run_count': 2,
                     'run_time_total': datetime.timedelta(seconds=1010),
@@ -133,7 +134,8 @@ NODE_SUMMARY_DATA = {
     'Mon 06/09': {
         'metrics': {'foo': {'formatted': 'foo1'}, 'bar': {'formatted': 'bar1'}, 'baz': {'formatted': 'baz1'}},
         'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100}, 'facterversion': {'2.0.0': 102, '1.7.2': 1}},
-        'nodes': { 'node1.example.com': {
+        'nodes': {
+            'node1.example.com': {
                 'reports': {
                     'run_count': 2,
                     'run_time_total': datetime.timedelta(seconds=1010),
