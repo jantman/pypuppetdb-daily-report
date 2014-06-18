@@ -146,10 +146,10 @@ def filter_report_metric_name(s):
                     'run_count': 'Total Reports',
                     'run_time_total': 'Total Runtime',
                     'run_time_avg': 'Average Runtime',
-                    'nodes_with_no_report': 'Nodes With No Report',
-                    'nodes_no_successful_runs': 'Nodes With 100% Failed Runs',
-                    'nodes_50+_failed': 'Nodes With 50-100% Failed Runs',
-                    'nodes_too_few_runs': 'Nodes With <{n} Runs'.format(n=RUNS_PER_DAY),
+                    'with_no_report': 'With No Report',
+                    'with_no_successful_runs': 'With 100% Failed Runs',
+                    'with_50+%_failed': 'With 50-100% Failed Runs',
+                    'with_too_few_runs': 'With <{n} Runs in 24h'.format(n=RUNS_PER_DAY),
                     }
     return metric_names.get(s, s)
 
@@ -275,19 +275,23 @@ def aggregate_data_for_timespan(data):
                       'with_failures': 0,
                       'with_changes': 0,
                       'with_skips': 0,
-                      'nodes_with_no_report': 0,
-                      'nodes_no_successful_runs': 0,
-                      'nodes_50+_failed': 0,
-                      'nodes_too_few_runs': 0,
                       }
+    res['nodes'] = {'with_failures': 0,
+                    'with_changes': 0,
+                    'with_skips': 0,
+                    'with_no_report': 0,
+                    'with_no_successful_runs': 0,
+                    'with_50+%_failed': 0,
+                    'with_too_few_runs': 0,
+                    }
     for node in data['nodes']:
         if 'reports' not in data['nodes'][node]:
-            res['reports']['nodes_with_no_report'] += 1
-            res['reports']['nodes_no_successful_runs'] += 1
+            res['nodes']['with_no_report'] += 1
+            res['nodes']['with_no_successful_runs'] += 1
             continue
         if 'run_count' not in data['nodes'][node]['reports']:
-            res['reports']['nodes_with_no_report'] += 1
-            res['reports']['nodes_no_successful_runs'] += 1
+            res['nodes']['with_no_report'] += 1
+            res['nodes']['with_no_successful_runs'] += 1
             continue
 
         failpct = 0
@@ -295,15 +299,15 @@ def aggregate_data_for_timespan(data):
             failpct = float(data['nodes'][node]['reports']['with_failures']) / float(data['nodes'][node]['reports']['run_count'])
 
         if data['nodes'][node]['reports']['run_count'] < RUNS_PER_DAY:
-            res['reports']['nodes_too_few_runs'] += 1
+            res['nodes']['with_too_few_runs'] += 1
 
         if data['nodes'][node]['reports']['run_count'] == 0:
-            res['reports']['nodes_with_no_report'] += 1
-            res['reports']['nodes_no_successful_runs'] += 1
+            res['nodes']['with_no_report'] += 1
+            res['nodes']['with_no_successful_runs'] += 1
         elif data['nodes'][node]['reports']['with_failures'] == data['nodes'][node]['reports']['run_count']:
-            res['reports']['nodes_no_successful_runs'] += 1
+            res['nodes']['with_no_successful_runs'] += 1
         elif failpct >= 0.5 and failpct < 1.0:
-            res['reports']['nodes_50+_failed'] += 1
+            res['nodes']['with_50+%_failed'] += 1
 
         for key in ['run_count', 'with_failures', 'with_changes', 'with_skips']:
             if key in data['nodes'][node]['reports']:
@@ -313,8 +317,6 @@ def aggregate_data_for_timespan(data):
             res['reports']['run_time_total'] = res['reports']['run_time_total'] + data['nodes'][node]['reports']['run_time_total']
         if 'run_time_max' in data['nodes'][node]['reports'] and data['nodes'][node]['reports']['run_time_max'] > res['reports']['run_time_max']:
             res['reports']['run_time_max'] = data['nodes'][node]['reports']['run_time_max']
-    print("run_time_total={r}".format(r=res['reports']['run_time_total']))
-    print("run_count={r}".format(r=res['reports']['run_count']))
     if res['reports']['run_count'] != 0:
         res['reports']['run_time_avg'] = res['reports']['run_time_total'] / res['reports']['run_count']
     logger.debug("aggregation done, returning result")

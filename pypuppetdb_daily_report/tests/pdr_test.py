@@ -504,8 +504,6 @@ class Test_main:
                       FakeDatetime(2014, 6, 11, 3, 59, 59, tzinfo=pytz.utc),
                       FakeDatetime(2014, 6, 4, 4, 0, 0, tzinfo=pytz.utc)
                       )
-        pprint.pprint(r)
-        pprint.pprint(format_html_mock.call_args)
         assert format_html_mock.call_args == r
         assert send_mail_mock.call_count == 1
         assert send_mail_mock.call_args == mock.call('foo bar baz', dry_run=False)
@@ -799,7 +797,6 @@ class Test_query_data_for_node:
         assert logger_mock.debug.call_count == 2
         assert pdb_mock.event_counts.call_count == 0
         assert pdb_mock.events.call_count == 4
-        print(pdb_mock.events.call_args_list)
         assert pdb_mock.events.call_args_list == [mock.call('["=", "report", "hash1"]'),
                                                   mock.call('["=", "report", "hash2"]'),
                                                   mock.call('["=", "report", "hash3"]'),
@@ -864,11 +861,11 @@ class Test_filter_report_metric_name:
         assert pdr.filter_report_metric_name('with_changes') == 'With Changes'
         assert pdr.filter_report_metric_name('run_count') == 'Total Reports'
         assert pdr.filter_report_metric_name('run_time_avg') == 'Average Runtime'
-        assert pdr.filter_report_metric_name('nodes_with_no_report') == 'Nodes With No Report'
-        assert pdr.filter_report_metric_name('nodes_no_successful_runs') == 'Nodes With 100% Failed Runs'
-        assert pdr.filter_report_metric_name('nodes_50+_failed') == 'Nodes With 50-100% Failed Runs'
+        assert pdr.filter_report_metric_name('with_no_report') == 'With No Report'
+        assert pdr.filter_report_metric_name('with_no_successful_runs') == 'With 100% Failed Runs'
+        assert pdr.filter_report_metric_name('with_50+%_failed') == 'With 50-100% Failed Runs'
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 9):
-            assert pdr.filter_report_metric_name('nodes_too_few_runs') == 'Nodes With <9 Runs'
+            assert pdr.filter_report_metric_name('with_too_few_runs') == 'With <9 Runs in 24h'
 
 
 class Test_filter_report_metric_format:
@@ -915,10 +912,10 @@ class Test_aggregate_data_for_timespan:
         data.pop('aggregate', None)
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
             result = pdr.aggregate_data_for_timespan(data)
-        assert result['reports']['nodes_with_no_report'] == 1
-        assert result['reports']['nodes_no_successful_runs'] == 4
-        assert result['reports']['nodes_50+_failed'] == 1
-        assert result['reports']['nodes_too_few_runs'] == 4
+        assert result['nodes']['with_no_report'] == 1
+        assert result['nodes']['with_no_successful_runs'] == 4
+        assert result['nodes']['with_50+%_failed'] == 1
+        assert result['nodes']['with_too_few_runs'] == 4
 
     def test_report_counts_divzero(self):
         data = {
@@ -943,9 +940,6 @@ class Test_aggregate_data_for_timespan:
         assert result['reports']['with_changes'] == 0
         assert result['reports']['with_skips'] == 0
         assert result['reports']['run_time_avg'] == datetime.timedelta()
-        assert result['reports']['nodes_with_no_report'] == 1
-        assert result['reports']['nodes_no_successful_runs'] == 1
-        assert result['reports']['nodes_50+_failed'] == 0
 
     def test_report_counts_empty_node(self):
         data = {
@@ -964,7 +958,38 @@ class Test_aggregate_data_for_timespan:
         assert result['reports']['with_changes'] == 0
         assert result['reports']['with_skips'] == 0
         assert result['reports']['run_time_avg'] == datetime.timedelta()
-        assert result['reports']['nodes_with_no_report'] == 2
+
+    def test_node_counts_divzero(self):
+        data = {
+            'nodes': {
+                'node1.example.com': {
+                    'reports': {
+                        'run_count': 0,
+                        'run_time_total': datetime.timedelta(),
+                        'run_time_max': datetime.timedelta(),
+                        'with_failures': 0,
+                        'with_changes': 0,
+                        'with_skips': 0,
+                    },
+                },
+            },
+        }
+        result = pdr.aggregate_data_for_timespan(data)
+        assert result['nodes']['with_no_report'] == 1
+        assert result['nodes']['with_no_successful_runs'] == 1
+        assert result['nodes']['with_50+%_failed'] == 0
+
+    def test_node_counts_empty_node(self):
+        data = {
+            'nodes': {
+                'node1.example.com': {
+                    'reports': {},
+                },
+                'node2.example.com': {},
+            },
+        }
+        result = pdr.aggregate_data_for_timespan(data)
+        assert result['nodes']['with_no_report'] == 2
 
 
 class Test_format_html:

@@ -156,11 +156,11 @@ class Test_template_reports:
 
         assert '<h2>Report Overview</h2>' in html
         assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
-        assert '<tr><th>TotalReports</th><td>9</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>WithFailures</th><td>8(89%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>WithChanges</th><td>4(44%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>WithSkippedResources</th><td>3(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>AverageRuntime</th><td>4m5s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>TotalReports</th><td>19</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>WithFailures</th><td>15(79%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>WithChanges</th><td>6(32%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>WithSkippedResources</th><td>10(53%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>AverageRuntime</th><td>2m1s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
         assert '<tr><th>MaximumRuntime</th><td>16m40s</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
 
     def test_no_runs(self):
@@ -207,9 +207,10 @@ class Test_template_nodes:
 
         html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date)
         s = stripped.replace('</tr>', "</tr>\n")
+        print(html)
         assert '<h2>Node Summary</h2>' in html
         assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
-        assert '<tr><th>NodesWith100%FailedRuns</th><td>4(67%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>NodesWith50-100%FailedRuns</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>NodesWithNoReport</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
-        assert '<tr><th>NodesWith<9Runs</th><td>4(67%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>With100%FailedRuns</th><td>4(67%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>With50-100%FailedRuns</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>WithNoReport</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert '<tr><th>With<9Runsin24h</th><td>4(67%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
