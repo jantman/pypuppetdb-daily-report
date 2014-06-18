@@ -46,6 +46,7 @@ import pytz
 import time
 import tzlocal
 from ago import delta2dict
+from collections import defaultdict
 
 import pickle
 
@@ -284,6 +285,11 @@ def aggregate_data_for_timespan(data):
                     'with_50+%_failed': 0,
                     'with_too_few_runs': 0,
                     }
+    res['resources'] = {'failed': defaultdict(int),
+                        'changed': defaultdict(int),
+                        'skipped': defaultdict(int),
+                        }
+
     for node in data['nodes']:
         if 'reports' not in data['nodes'][node]:
             res['nodes']['with_no_report'] += 1
@@ -319,6 +325,21 @@ def aggregate_data_for_timespan(data):
             res['reports']['run_time_total'] = res['reports']['run_time_total'] + data['nodes'][node]['reports']['run_time_total']
         if 'run_time_max' in data['nodes'][node]['reports'] and data['nodes'][node]['reports']['run_time_max'] > res['reports']['run_time_max']:
             res['reports']['run_time_max'] = data['nodes'][node]['reports']['run_time_max']
+
+        # resource counts across all nodes
+        print("doing node {n}".format(n=node))
+        if 'resources' in data['nodes'][node]:
+            for key in ['failed', 'changed', 'skipped']:
+                if key in data['nodes'][node]['resources']:
+                    for tup in data['nodes'][node]['resources'][key]:
+                        print("got {k} {t}".format(k=key, t=tup))
+                        print(res['resources']['failed'])
+                        res['resources'][key][tup] += 1
+
+    # flatten defaultdicts for serialization
+    for key in res['resources']:
+        res['resources'][key] = dict(res['resources'][key])
+
     if res['reports']['run_count'] != 0:
         res['reports']['run_time_avg'] = res['reports']['run_time_total'] / res['reports']['run_count']
     logger.debug("aggregation done, returning result")
@@ -371,6 +392,10 @@ def query_data_for_node(pdb, node, start, end):
                       'run_time_total': datetime.timedelta(),
                       'run_time_max': datetime.timedelta()
                       }
+    res['resources'] = {'failed': defaultdict(int),
+                        'changed': defaultdict(int),
+                        'skipped': defaultdict(int),
+                        }
     for rep in node.reports():
         if rep.start > end:
             continue
@@ -391,10 +416,13 @@ def query_data_for_node(pdb, node, start, end):
         for e in events:
             if e.status == 'skipped':
                 skips += 1
+                res['resources']['skipped'][(e.item['type'], e.item['title'])] += 1
             elif e.status == 'success':
                 successes += 1
+                res['resources']['changed'][(e.item['type'], e.item['title'])] += 1
             elif e.status == 'failure':
                 failures += 1
+                res['resources']['failed'][(e.item['type'], e.item['title'])] += 1
         # increment per-node counters for this report
         if skips > 0:
             res['reports']['with_skips'] += 1
@@ -402,6 +430,10 @@ def query_data_for_node(pdb, node, start, end):
             res['reports']['with_changes'] += 1
         if failures > 0:
             res['reports']['with_failures'] += 1
+
+    # flatten defaultdicts for serialization
+    for key in res['resources']:
+        res['resources'][key] = dict(res['resources'][key])
 
     logger.debug("got {num} reports for node".format(num=len(res['reports'])))
 

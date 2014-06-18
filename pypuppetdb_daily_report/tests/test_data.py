@@ -24,6 +24,18 @@ FINAL_DATA = {
                     'with_changes': 2,
                     'with_skips': 2,
                 },
+                'resources': {
+                    'changed': {
+                        (u'Exec', u'zookeeper ensemble check'): 1,
+                        (u'Service', u'winbind'): 1,
+                        (u'Service', u'zookeeper-server'): 2,
+                    },
+                    'failed': {
+                        (u'Package', u'libsmbios'): 1,
+                        (u'Package', u'srvadmin-idrac7'): 2,
+                    },
+                    'skipped': {},
+                },
             },
             'node2.example.com': {
                 'reports': {
@@ -33,6 +45,17 @@ FINAL_DATA = {
                     'with_failures': 1,
                     'with_changes': 1,
                     'with_skips': 1,
+                },
+                'resources': {
+                    'changed': {
+                        (u'Service', u'zookeeper-server'): 2,
+                    },
+                    'failed': {},
+                    'skipped': {
+                        (u'Augeas', u'disable dell yum plugin once OM is installed'): 1,
+                        (u'Service', u'dataeng'): 1,
+                        (u'Exec', u'zookeeper ensemble check'): 1,
+                    },
                 },
             },
             'node3.example.com': {
@@ -44,6 +67,19 @@ FINAL_DATA = {
                     'with_changes': 1,
                     'with_skips': 0,
                 },
+                'resources': {
+                    'changed': {
+                        (u'Service', u'winbind'): 1,
+                    },
+                    'failed': {
+                        (u'Exec', u'zookeeper ensemble check'): 1,
+                        (u'Package', u'libsmbios'): 1,
+                        (u'Package', u'srvadmin-idrac7'): 2,
+                    },
+                    'skipped': {
+                        (u'Augeas', u'disable dell yum plugin once OM is installed'): 1,
+                    },
+                },
             },
             'node4.example.com': {
                 'reports': {
@@ -54,6 +90,7 @@ FINAL_DATA = {
                     'with_changes': 0,
                     'with_skips': 0,
                 },
+                'resources': {}
             },
             'node5.example.com': {
                 'reports': {
@@ -64,6 +101,7 @@ FINAL_DATA = {
                     'with_changes': 0,
                     'with_skips': 0,
                 },
+                'resources': {}
             },
             'node6.example.com': {
                 'reports': {
@@ -74,6 +112,7 @@ FINAL_DATA = {
                     'with_changes': 2,
                     'with_skips': 7,
                 },
+                'resources': {}
             },
         },
         'aggregate': {
