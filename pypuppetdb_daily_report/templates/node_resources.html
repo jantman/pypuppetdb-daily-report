@@ -12,7 +12,8 @@
     {% endif %}
   {% endfor %}
   </tr>
-{% for res_tup, count in data[dates[0]]['aggregate']['nodes']['resources']['changed']|resourcedictsort  %}
+{% for res_type, res_title in data[dates[0]]['aggregate']['nodes']['resources']['changed']|resourcedictsort  %}
+{% set res_tup = (res_type, res_title) %}
   <tr>
   <th>{{ res_tup[0] }}[{{ res_tup[1] }}]</th>
   {% for date_s in dates %}
@@ -44,7 +45,8 @@
     {% endif %}
   {% endfor %}
   </tr>
-{% for res_tup, count in data[dates[0]]['aggregate']['nodes']['resources']['failed']|resourcedictsort %}
+{% for res_type, res_title in data[dates[0]]['aggregate']['nodes']['resources']['failed']|resourcedictsort  %}
+{% set res_tup = (res_type, res_title) %}
   <tr>
   <th>{{ res_tup[0] }}[{{ res_tup[1] }}]</th>
   {% for date_s in dates %}
