@@ -45,7 +45,7 @@ from jinja2 import Environment, PackageLoader
 import pytz
 import tzlocal
 from ago import delta2dict
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from platform import node as platform_node
 from getpass import getuser
 
@@ -127,6 +127,7 @@ def format_html(hostname, dates, date_data, start_date, end_date):
     env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
     env.filters['reportmetricname'] = filter_report_metric_name
     env.filters['reportmetricformat'] = filter_report_metric_format
+    env.filters['resourcedictsort'] = filter_resource_dict_sort
     template = env.get_template('base.html')
 
     run_info = {
@@ -144,6 +145,16 @@ def format_html(hostname, dates, date_data, start_date, end_date):
                            run_info=run_info,
                            )
     return html
+
+
+def filter_resource_dict_sort(d):
+    """
+    Used to sort a dictionary of resources, tuple-of-strings key and int value,
+    sorted reverse by value and alphabetically by key within each value set.
+    """
+    items = list(d.items())
+    keyfunc = lambda x: tuple([-x[1]] + list(x[0]))
+    return OrderedDict(sorted(items, key=keyfunc))
 
 
 def filter_report_metric_name(s):
@@ -335,7 +346,6 @@ def aggregate_data_for_timespan(data):
             res['reports']['run_time_max'] = data['nodes'][node]['reports']['run_time_max']
 
         # resource counts across all nodes
-        print("doing node {n}".format(n=node))
         if 'resources' in data['nodes'][node]:
             for key in ['failed', 'changed', 'skipped']:
                 if key in data['nodes'][node]['resources']:

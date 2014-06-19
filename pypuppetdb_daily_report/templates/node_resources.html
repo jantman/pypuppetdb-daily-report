@@ -1,0 +1,67 @@
+<!-- begin node_resources.html -->
+<h3>Top Resource Changes, by Number of Nodes with Change</h3>
+<table border="1">
+<tr><th>&nbsp;</th>{% for date_s in dates %}<th>{{ date_s }}</th>{% endfor %}</tr>
+  <tr>
+  <th>Total Nodes</th>
+  {% for date_s in dates %}
+    {% if (data[date_s]['nodes']|length) > 0 %}
+    <td>{{ data[date_s]['nodes']|length }}</td>
+    {% else %}
+    <td>&nbsp;</td>
+    {% endif %}
+  {% endfor %}
+  </tr>
+{% for res_type, res_title in data[dates[0]]['aggregate']['nodes']['resources']['changed']|resourcedictsort  %}
+{% set res_tup = (res_type, res_title) %}
+  <tr>
+  <th>{{ res_tup[0] }}[{{ res_tup[1] }}]</th>
+  {% for date_s in dates %}
+    <td>
+    {% if 'aggregate' in data[date_s] and 'nodes' in data[date_s]['aggregate'] and 'resources' in data[date_s]['aggregate']['nodes'] and 'changed' in data[date_s]['aggregate']['nodes']['resources'] and res_tup in data[date_s]['aggregate']['nodes']['resources']['changed'] %}
+      {{ data[date_s]['aggregate']['nodes']['resources']['changed'][res_tup]|reportmetricformat }}
+      {% if (data[date_s]['nodes']|length) > 0 %}
+        {{ '({0:.0%})'.format(data[date_s]['aggregate']['nodes']['resources']['changed'][res_tup]/(data[date_s]['nodes']|length)) }}
+      {% endif %}
+    {% else %}
+      &nbsp;
+    {% endif %}
+    </td>
+  {% endfor %}
+  </tr>
+{% endfor %}
+</table>
+
+<h3>Top Resource Failures, by Number of Nodes with Failure</h3>
+<table border="1">
+<tr><th>&nbsp;</th>{% for date_s in dates %}<th>{{ date_s }}</th>{% endfor %}</tr>
+  <tr>
+  <th>Total Nodes</th>
+  {% for date_s in dates %}
+    {% if (data[date_s]['nodes']|length) > 0 %}
+    <td>{{ data[date_s]['nodes']|length }}</td>
+    {% else %}
+    <td>&nbsp;</td>
+    {% endif %}
+  {% endfor %}
+  </tr>
+{% for res_type, res_title in data[dates[0]]['aggregate']['nodes']['resources']['failed']|resourcedictsort  %}
+{% set res_tup = (res_type, res_title) %}
+  <tr>
+  <th>{{ res_tup[0] }}[{{ res_tup[1] }}]</th>
+  {% for date_s in dates %}
+    <td>
+    {% if 'aggregate' in data[date_s] and 'nodes' in data[date_s]['aggregate'] and 'resources' in data[date_s]['aggregate']['nodes'] and 'failed' in data[date_s]['aggregate']['nodes']['resources'] and res_tup in data[date_s]['aggregate']['nodes']['resources']['failed'] %}
+      {{ data[date_s]['aggregate']['nodes']['resources']['failed'][res_tup]|reportmetricformat }}
+      {% if (data[date_s]['nodes']|length) > 0 %}
+        {{ '({0:.0%})'.format(data[date_s]['aggregate']['nodes']['resources']['failed'][res_tup]/(data[date_s]['nodes']|length)) }}
+      {% endif %}
+    {% else %}
+      &nbsp;
+    {% endif %}
+    </td>
+  {% endfor %}
+  </tr>
+{% endfor %}
+</table>
+<!-- end node_resources.html -->

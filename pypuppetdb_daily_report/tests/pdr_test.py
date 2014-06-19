@@ -38,6 +38,7 @@ import pypuppetdb
 from jinja2 import Environment, PackageLoader, Template
 import pytz
 from copy import deepcopy
+from collections import OrderedDict
 
 from pypuppetdb_daily_report import pypuppetdb_daily_report as pdr
 from pypuppetdb_daily_report import VERSION
@@ -872,6 +873,28 @@ class Test_filter_report_metric_name:
             assert pdr.filter_report_metric_name('with_too_few_runs') == 'With <9 Runs in 24h'
 
 
+class Test_filter_resource_dict_sort:
+
+    def test_dict_sort(self):
+        test_dict = {
+            ('aaa', 'aaa'): 1,
+            ('aaa', 'aab'): 1,
+            ('aab', 'aaa'): 1,
+            ('aaa', 'aac'): 1,
+            ('aaa', 'aa'): 3,
+            ('zzz', 'aaa'): 10,
+        }
+        expected = OrderedDict()
+        expected[('zzz', 'aaa')] = 10
+        expected[('aaa', 'aa')] = 3
+        expected[('aaa', 'aaa')] = 1
+        expected[('aaa', 'aab')] = 1
+        expected[('aaa', 'aac')] = 1
+        expected[('aab', 'aaa')] = 1
+        result = pdr.filter_resource_dict_sort(test_dict)
+        assert result == expected
+
+
 class Test_filter_report_metric_format:
 
     def test_string(self):
@@ -1119,12 +1142,14 @@ class Test_format_html:
         assert pl_mock.call_args == mock.call('pypuppetdb_daily_report', 'templates')
         assert env_obj_mock.get_template.call_count == 1
         assert env_obj_mock.get_template.call_args == mock.call('base.html')
-        assert env_obj_mock.filters['reportmetricname'] == pdr.filter_report_metric_name
-        assert env_obj_mock.filters['reportmetricformat'] == pdr.filter_report_metric_format
+        assert env_obj_mock.filters == {
+            'reportmetricname': pdr.filter_report_metric_name,
+            'reportmetricformat': pdr.filter_report_metric_format,
+            'resourcedictsort': pdr.filter_resource_dict_sort,
+        }
         assert tmpl_mock.render.call_count == 1
         assert node_mock.call_count == 1
         assert getuser_mock.call_count == 1
-        print(tmpl_mock.render.call_args)
         assert tmpl_mock.render.call_args == mock.call(data=self.data,
                                                        dates=self.dates,
                                                        hostname='foo.example.com',
