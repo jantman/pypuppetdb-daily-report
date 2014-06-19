@@ -12,7 +12,7 @@
     {% endif %}
   {% endfor %}
   </tr>
-{% for res_tup in data[dates[0]]['aggregate']['nodes']['resources']['changed'] %}
+{% for res_tup, count in data[dates[0]]['aggregate']['nodes']['resources']['changed']|reversabledictsort(false, 'value', true)  %}
   <tr>
   <th>{{ res_tup[0] }}[{{ res_tup[1] }}]</th>
   {% for date_s in dates %}
@@ -44,7 +44,7 @@
     {% endif %}
   {% endfor %}
   </tr>
-{% for res_tup, count in data[dates[0]]['aggregate']['nodes']['resources']['failed'] %}
+{% for res_tup, count in data[dates[0]]['aggregate']['nodes']['resources']['failed']|reversabledictsort(false, 'value', true) %}
   <tr>
   <th>{{ res_tup[0] }}[{{ res_tup[1] }}]</th>
   {% for date_s in dates %}

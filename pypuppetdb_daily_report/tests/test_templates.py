@@ -26,6 +26,7 @@ def get_html(tmpl_name, src_mock, data, dates, hostname, start_date, end_date, r
             env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
             env.filters['reportmetricname'] = pdr.filter_report_metric_name
             env.filters['reportmetricformat'] = pdr.filter_report_metric_format
+            env.filters['reversabledictsort'] = pdr.filter_reversable_dictsort
             template = env.get_template(tmpl_name)
             html = template.render(data=data,
                                    dates=dates,
@@ -267,7 +268,7 @@ class Test_template_node_resources:
         lines.append('<h3>TopResourceChanges,byNumberofNodeswithChange</h3><tableborder="1">')
         lines.append('<tr><th>&nbsp;</th><th>Tue06/10</th><th>Mon06/09</th><th>Sun06/08</th><th>Sat06/07</th><th>Fri06/06</th><th>Thu06/05</th><th>Wed06/04</th></tr>')
         lines.append('<tr><th>TotalNodes</th><td>6</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
-        lines.append('<tr><th>Service[winbind]</th><td>2(50%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Service[winbind]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('<tr><th>Service[zookeeper-server]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('<tr><th>Exec[zookeeperensemblecheck]</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('</table>')

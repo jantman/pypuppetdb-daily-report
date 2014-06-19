@@ -48,6 +48,8 @@ from ago import delta2dict
 from collections import defaultdict
 from platform import node as platform_node
 from getpass import getuser
+from jinja2._compat import string_types
+from jinja2.exceptions import FilterArgumentError
 
 import pickle
 
@@ -127,6 +129,7 @@ def format_html(hostname, dates, date_data, start_date, end_date):
     env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
     env.filters['reportmetricname'] = filter_report_metric_name
     env.filters['reportmetricformat'] = filter_report_metric_format
+    env.filters['reversabledictsort'] = filter_reversable_dictsort
     template = env.get_template('base.html')
 
     run_info = {
@@ -144,6 +147,42 @@ def format_html(hostname, dates, date_data, start_date, end_date):
                            run_info=run_info,
                            )
     return html
+
+
+def filter_reversable_dictsort(value, case_sensitive=False, by='key', reverse=False):
+    """
+    jinja2's dictsort patched to be reversable
+
+    Sort a dict and yield (key, value) pairs. Because python dicts are
+    unsorted you may want to use this function to order them by either
+    key or value:
+
+    .. sourcecode:: jinja
+
+    {% for item in mydict|dictsort %}
+    sort the dict by key, case insensitive
+
+    {% for item in mydict|dictsort(true) %}
+    sort the dict by key, case sensitive
+
+    {% for item in mydict|dictsort(false, 'value') %}
+    sort the dict by value, case insensitive
+    """
+    if by == 'key':
+        pos = 0
+    elif by == 'value':
+        pos = 1
+    else:
+        raise FilterArgumentError('You can only sort by either '
+                                  '"key" or "value"')
+
+    def sort_func(item):
+        value = item[pos]
+        if isinstance(value, string_types) and not case_sensitive:
+            value = value.lower()
+        return value
+
+    return sorted(value.items(), key=sort_func, reverse=reverse)
 
 
 def filter_report_metric_name(s):

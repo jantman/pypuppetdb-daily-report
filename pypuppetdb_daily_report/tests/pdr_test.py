@@ -872,6 +872,29 @@ class Test_filter_report_metric_name:
             assert pdr.filter_report_metric_name('with_too_few_runs') == 'With <9 Runs in 24h'
 
 
+class Test_filter_reversable_dictsort:
+
+    env = Environment()
+    env.filters['reversabledictsort'] = pdr.filter_reversable_dictsort
+
+    def test_dictsort(self):
+        tmpl = self.env.from_string(
+            '{{ foo|reversabledictsort }}|'
+            '{{ foo|reversabledictsort(true) }}|'
+            '{{ foo|reversabledictsort(false, "value") }}|'
+            '{{ foo|reversabledictsort(false, "key", true) }}|'
+            '{{ foo|reversabledictsort(true, "key", true) }}|'
+            '{{ foo|reversabledictsort(false, "value", true) }}'
+        )
+        out = tmpl.render(foo={"aa": 0, "b": 1, "c": 2, "AB": 3})
+        assert out == ("[('aa', 0), ('AB', 3), ('b', 1), ('c', 2)]|"
+                       "[('AB', 3), ('aa', 0), ('b', 1), ('c', 2)]|"
+                       "[('aa', 0), ('b', 1), ('c', 2), ('AB', 3)]|"
+                       "[('c', 2), ('b', 1), ('AB', 3), ('aa', 0)]|"
+                       "[('c', 2), ('b', 1), ('aa', 0), ('AB', 3)]|"
+                       "[('AB', 3), ('c', 2), ('b', 1), ('aa', 0)]")
+
+
 class Test_filter_report_metric_format:
 
     def test_string(self):
@@ -1119,8 +1142,11 @@ class Test_format_html:
         assert pl_mock.call_args == mock.call('pypuppetdb_daily_report', 'templates')
         assert env_obj_mock.get_template.call_count == 1
         assert env_obj_mock.get_template.call_args == mock.call('base.html')
-        assert env_obj_mock.filters['reportmetricname'] == pdr.filter_report_metric_name
-        assert env_obj_mock.filters['reportmetricformat'] == pdr.filter_report_metric_format
+        assert env_obj_mock.filters == {
+            'reportmetricname': pdr.filter_report_metric_name,
+            'reportmetricformat': pdr.filter_report_metric_format,
+            'reversabledictsort': pdr.filter_reversable_dictsort
+        }
         assert tmpl_mock.render.call_count == 1
         assert node_mock.call_count == 1
         assert getuser_mock.call_count == 1
