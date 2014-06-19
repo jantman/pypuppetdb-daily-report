@@ -38,6 +38,7 @@ import pypuppetdb
 from jinja2 import Environment, PackageLoader, Template
 import pytz
 from copy import deepcopy
+from collections import OrderedDict
 
 from pypuppetdb_daily_report import pypuppetdb_daily_report as pdr
 from pypuppetdb_daily_report import VERSION
@@ -872,27 +873,26 @@ class Test_filter_report_metric_name:
             assert pdr.filter_report_metric_name('with_too_few_runs') == 'With <9 Runs in 24h'
 
 
-class Test_filter_reversable_dictsort:
+class Test_filter_resource_dict_sort:
 
-    env = Environment()
-    env.filters['reversabledictsort'] = pdr.filter_reversable_dictsort
-
-    def test_dictsort(self):
-        tmpl = self.env.from_string(
-            '{{ foo|reversabledictsort }}|'
-            '{{ foo|reversabledictsort(true) }}|'
-            '{{ foo|reversabledictsort(false, "value") }}|'
-            '{{ foo|reversabledictsort(false, "key", true) }}|'
-            '{{ foo|reversabledictsort(true, "key", true) }}|'
-            '{{ foo|reversabledictsort(false, "value", true) }}'
-        )
-        out = tmpl.render(foo={"aa": 0, "b": 1, "c": 2, "AB": 3})
-        assert out == ("[('aa', 0), ('AB', 3), ('b', 1), ('c', 2)]|"
-                       "[('AB', 3), ('aa', 0), ('b', 1), ('c', 2)]|"
-                       "[('aa', 0), ('b', 1), ('c', 2), ('AB', 3)]|"
-                       "[('c', 2), ('b', 1), ('AB', 3), ('aa', 0)]|"
-                       "[('c', 2), ('b', 1), ('aa', 0), ('AB', 3)]|"
-                       "[('AB', 3), ('c', 2), ('b', 1), ('aa', 0)]")
+    def test_dict_sort(self):
+        test_dict = {
+            ('aaa', 'aaa'): 1,
+            ('aaa', 'aab'): 1,
+            ('aab', 'aaa'): 1,
+            ('aaa', 'aac'): 1,
+            ('aaa', 'aa'): 3,
+            ('zzz', 'aaa'): 10,
+        }
+        expected = OrderedDict()
+        expected[('zzz', 'aaa')] = 10
+        expected[('aaa', 'aa')] = 3
+        expected[('aaa', 'aaa')] = 1
+        expected[('aaa', 'aab')] = 1
+        expected[('aaa', 'aac')] = 1
+        expected[('aab', 'aaa')] = 1
+        result = pdr.filter_resource_dict_sort(test_dict)
+        assert result == expected
 
 
 class Test_filter_report_metric_format:
@@ -1145,7 +1145,7 @@ class Test_format_html:
         assert env_obj_mock.filters == {
             'reportmetricname': pdr.filter_report_metric_name,
             'reportmetricformat': pdr.filter_report_metric_format,
-            'reversabledictsort': pdr.filter_reversable_dictsort
+            'resourcedictsort': pdr.filter_resource_dict_sort,
         }
         assert tmpl_mock.render.call_count == 1
         assert node_mock.call_count == 1

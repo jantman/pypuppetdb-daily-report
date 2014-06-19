@@ -45,11 +45,9 @@ from jinja2 import Environment, PackageLoader
 import pytz
 import tzlocal
 from ago import delta2dict
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from platform import node as platform_node
 from getpass import getuser
-from jinja2._compat import string_types
-from jinja2.exceptions import FilterArgumentError
 
 import pickle
 
@@ -129,7 +127,7 @@ def format_html(hostname, dates, date_data, start_date, end_date):
     env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
     env.filters['reportmetricname'] = filter_report_metric_name
     env.filters['reportmetricformat'] = filter_report_metric_format
-    env.filters['reversabledictsort'] = filter_reversable_dictsort
+    env.filters['resourcedictsort'] = filter_resource_dict_sort
     template = env.get_template('base.html')
 
     run_info = {
@@ -149,64 +147,14 @@ def format_html(hostname, dates, date_data, start_date, end_date):
     return html
 
 
-def filter_reversable_dictsort(value, case_sensitive=False, by='key', reverse=False):
+def filter_resource_dict_sort(d):
     """
-    jinja2's dictsort patched to be reversable
-
-    This also sorts based on the combination of the key and value, to yield a
-    reproducable sort order.
-
-    Sort a dict and yield (key, value) pairs. Because python dicts are
-    unsorted you may want to use this function to order them by either
-    key or value:
-
-    .. sourcecode:: jinja
-
-    {% for item in mydict|dictsort %}
-    sort the dict by key, case insensitive
-
-    {% for item in mydict|dictsort(true) %}
-    sort the dict by key, case sensitive
-
-    {% for item in mydict|dictsort(false, 'value') %}
-    sort the dict by value, case insensitive
+    Used to sort a dictionary of resources, tuple-of-strings key and int value,
+    sorted reverse by value and alphabetically by key within each value set.
     """
-    if by == 'key':
-        pos = 0
-    elif by == 'value':
-        pos = 1
-    else:
-        raise FilterArgumentError('You can only sort by either '
-                                  '"key" or "value"')
-
-    """
-from collections import OrderedDict
-
-
-def sort_dict(d):
     items = list(d.iteritems())
-    keyfunc = lambda x: tuple([x[1]] + list(x[0]))
+    keyfunc = lambda x: tuple([-x[1]] + list(x[0]))
     return OrderedDict(sorted(items, key=keyfunc))
-
-
-x = {
-    ('Service', 'dataeng'): 1,
-    ('Package', 'libsmbios'): 1,
-    ('Service', 'zookeeper-server'): 2,
-}
-
-print x
-print sort_dict(x)
-
-    """
-
-    def sort_func(item):
-        value = item[pos]
-        if isinstance(value, string_types) and not case_sensitive:
-            value = value.lower()
-        return (value, item)
-
-    return sorted(value.items(), key=sort_func, reverse=reverse)
 
 
 def filter_report_metric_name(s):

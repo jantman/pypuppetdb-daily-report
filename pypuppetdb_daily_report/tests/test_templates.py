@@ -26,7 +26,7 @@ def get_html(tmpl_name, src_mock, data, dates, hostname, start_date, end_date, r
             env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
             env.filters['reportmetricname'] = pdr.filter_report_metric_name
             env.filters['reportmetricformat'] = pdr.filter_report_metric_format
-            env.filters['reversabledictsort'] = pdr.filter_reversable_dictsort
+            env.filters['resourcedictsort'] = pdr.filter_resource_dict_sort
             template = env.get_template(tmpl_name)
             html = template.render(data=data,
                                    dates=dates,
