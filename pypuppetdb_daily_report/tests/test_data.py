@@ -7,7 +7,6 @@ a pain to work with.
 
 """
 import datetime
-from pytz import utc
 from pypuppetdb.types import Event
 
 FINAL_DATA = {

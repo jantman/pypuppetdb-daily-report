@@ -43,7 +43,6 @@ import os
 from math import floor, ceil
 from jinja2 import Environment, PackageLoader
 import pytz
-import time
 import tzlocal
 from ago import delta2dict
 from collections import defaultdict

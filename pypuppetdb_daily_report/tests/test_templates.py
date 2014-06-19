@@ -2,14 +2,13 @@
 tests for jinja2 templates
 """
 
-from pkg_resources import DefaultProvider, ResourceManager, get_provider
+from pkg_resources import ResourceManager, get_provider
 import re
 import mock
 import datetime
 import pytz
-import pytest
 from copy import deepcopy
-from jinja2 import Environment, PackageLoader, Template
+from jinja2 import Environment, PackageLoader
 from jinja2.loaders import split_template_path
 
 from pypuppetdb_daily_report import pypuppetdb_daily_report as pdr
@@ -206,8 +205,6 @@ class Test_template_nodes:
         end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
 
         html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date)
-        s = stripped.replace('</tr>', "</tr>\n")
-        print(html)
         assert '<h2>Node Summary</h2>' in html
         assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
         assert '<tr><th>Count</th><td>6</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped

@@ -28,19 +28,15 @@ Jason Antman <jason@jasonantman.com> <http://www.jasonantman.com>
 import pytest
 import sys
 import os
-import shutil
 import mock
 import logging
 import datetime
-import re
 from freezegun import freeze_time
 from freezegun.api import FakeDatetime
 from requests.exceptions import HTTPError
 import pypuppetdb
 from jinja2 import Environment, PackageLoader, Template
-from jinja2.loaders import split_template_path
 import pytz
-import pprint
 from copy import deepcopy
 
 from pypuppetdb_daily_report import pypuppetdb_daily_report as pdr
@@ -243,7 +239,7 @@ class Test_get_dashboard_metrics:
         pdb_mock.metric.side_effect = side_effect
         logger_mock = mock.MagicMock()
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
-            foo = pdr.get_dashboard_metrics(pdb_mock)
+            pdr.get_dashboard_metrics(pdb_mock)
         assert pdb_mock.metric.call_count == 17
         assert mock.call("unable to get value for metric: Catalog duplication") in logger_mock.debug.call_args_list
 
@@ -316,10 +312,10 @@ class Test_get_data_for_timespan:
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock), \
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock), \
                 mock.patch('pickle.dumps', pickle_mock):
-            result = pdr.get_data_for_timespan(None,
-                                               datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
-                                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59),
-                                               cache_dir='/tmp/cache')
+            pdr.get_data_for_timespan(None,
+                                      datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
+                                      datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59),
+                                      cache_dir='/tmp/cache')
         assert os_mock.path.exists.call_count == 2
         assert os_mock.path.exists.call_args_list == [mock.call('/tmp/cache'),
                                                       mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.pickle')
@@ -366,10 +362,10 @@ class Test_get_data_for_timespan:
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock), \
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock), \
                 mock.patch('pickle.dumps', pickle_mock):
-            result = pdr.get_data_for_timespan(None,
-                                               datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
-                                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59),
-                                               cache_dir='/tmp/cache')
+            pdr.get_data_for_timespan(None,
+                                      datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
+                                      datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59),
+                                      cache_dir='/tmp/cache')
         assert os_mock.path.exists.call_count == 2
         assert os_mock.path.exists.call_args_list == [mock.call('/tmp/cache'),
                                                       mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.pickle')
@@ -409,10 +405,10 @@ class Test_get_data_for_timespan:
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock), \
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock), \
                 mock.patch('pickle.dumps', pickle_mock):
-            result = pdr.get_data_for_timespan(None,
-                                               datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
-                                               datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59),
-                                               cache_dir=None)
+            pdr.get_data_for_timespan(None,
+                                      datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
+                                      datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59),
+                                      cache_dir=None)
         assert path_exists_mock.call_count == 0
         assert mock_open.call_count == 0
         fh = mock_open.return_value.__enter__.return_value
@@ -521,7 +517,7 @@ class Test_get_date_list:
         with freeze_time("2014-06-11 08:15:43", tz_offset=-4), \
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock), \
                 mock.patch('tzlocal.get_localzone', localzone_mock):
-            dates = pdr.get_date_list(7)
+            pdr.get_date_list(7)
 
         assert logger_mock.debug.call_args_list == [mock.call('local_start_date=2014-06-10 23:59:59-0400 EDT'),
                                                     mock.call('start_date=2014-06-11 03:59:59+0000 UTC'),
