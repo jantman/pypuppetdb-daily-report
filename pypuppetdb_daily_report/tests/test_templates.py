@@ -334,7 +334,7 @@ class Test_template_report_resources:
         lines.append('<tr><th>&nbsp;</th><th>Tue06/10</th><th>Mon06/09</th><th>Sun06/08</th><th>Sat06/07</th><th>Fri06/06</th><th>Thu06/05</th><th>Wed06/04</th></tr>')
         lines.append('<tr><th>TotalReports</th><td>19</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('<tr><th>Service[zookeeper-server]</th><td>4(21%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
-        lines.append('<tr><th>Service[winbind]</th><td>2(10%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Service[winbind]</th><td>2(11%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('<tr><th>Exec[zookeeperensemblecheck]</th><td>1(5%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('</table>')
         all_lines = ''
@@ -362,7 +362,7 @@ class Test_template_report_resources:
         lines.append('<tr><th>&nbsp;</th><th>Tue06/10</th><th>Mon06/09</th><th>Sun06/08</th><th>Sat06/07</th><th>Fri06/06</th><th>Thu06/05</th><th>Wed06/04</th></tr>')
         lines.append('<tr><th>TotalReports</th><td>19</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('<tr><th>Package[srvadmin-idrac7]</th><td>4(21%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
-        lines.append('<tr><th>Package[libsmbios]</th><td>2(10%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Package[libsmbios]</th><td>2(11%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('<tr><th>Exec[zookeeperensemblecheck]</th><td>1(5%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('</table>')
         lines.append('<!--endreport_resources.html-->')
