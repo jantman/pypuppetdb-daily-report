@@ -153,6 +153,9 @@ def filter_reversable_dictsort(value, case_sensitive=False, by='key', reverse=Fa
     """
     jinja2's dictsort patched to be reversable
 
+    This also sorts based on the combination of the key and value, to yield a
+    reproducable sort order.
+
     Sort a dict and yield (key, value) pairs. Because python dicts are
     unsorted you may want to use this function to order them by either
     key or value:
@@ -176,11 +179,32 @@ def filter_reversable_dictsort(value, case_sensitive=False, by='key', reverse=Fa
         raise FilterArgumentError('You can only sort by either '
                                   '"key" or "value"')
 
+    """
+from collections import OrderedDict
+
+
+def sort_dict(d):
+    items = list(d.iteritems())
+    keyfunc = lambda x: tuple([x[1]] + list(x[0]))
+    return OrderedDict(sorted(items, key=keyfunc))
+
+
+x = {
+    ('Service', 'dataeng'): 1,
+    ('Package', 'libsmbios'): 1,
+    ('Service', 'zookeeper-server'): 2,
+}
+
+print x
+print sort_dict(x)
+
+    """
+
     def sort_func(item):
         value = item[pos]
         if isinstance(value, string_types) and not case_sensitive:
             value = value.lower()
-        return value
+        return (value, item)
 
     return sorted(value.items(), key=sort_func, reverse=reverse)
 
