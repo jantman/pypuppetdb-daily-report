@@ -948,7 +948,7 @@ class Test_aggregate_data_for_timespan:
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
             result = pdr.aggregate_data_for_timespan(data)
 
-        assert result['resources'] == expected
+        assert result['nodes']['resources'] == expected
 
     def test_report_counts_divzero(self):
         data = {

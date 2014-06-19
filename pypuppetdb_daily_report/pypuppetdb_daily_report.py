@@ -286,6 +286,7 @@ def aggregate_data_for_timespan(data):
                       'with_failures': 0,
                       'with_changes': 0,
                       'with_skips': 0,
+                      'resources': {'failed': defaultdict(int), 'changed': defaultdict(int), 'skipped': defaultdict(int)},
                       }
     res['nodes'] = {'with_failures': 0,
                     'with_changes': 0,
@@ -294,11 +295,8 @@ def aggregate_data_for_timespan(data):
                     'with_no_successful_runs': 0,
                     'with_50+%_failed': 0,
                     'with_too_few_runs': 0,
+                    'resources': {'failed': defaultdict(int), 'changed': defaultdict(int), 'skipped': defaultdict(int)},
                     }
-    res['resources'] = {'failed': defaultdict(int),
-                        'changed': defaultdict(int),
-                        'skipped': defaultdict(int),
-                        }
 
     for node in data['nodes']:
         if 'reports' not in data['nodes'][node]:
@@ -343,12 +341,12 @@ def aggregate_data_for_timespan(data):
                 if key in data['nodes'][node]['resources']:
                     for tup in data['nodes'][node]['resources'][key]:
                         print("got {k} {t}".format(k=key, t=tup))
-                        print(res['resources']['failed'])
-                        res['resources'][key][tup] += 1
+                        print(res['nodes']['resources']['failed'])
+                        res['nodes']['resources'][key][tup] += 1
 
     # flatten defaultdicts for serialization
-    for key in res['resources']:
-        res['resources'][key] = dict(res['resources'][key])
+    for key in res['nodes']['resources']:
+        res['nodes']['resources'][key] = dict(res['nodes']['resources'][key])
 
     if res['reports']['run_count'] != 0:
         res['reports']['run_time_avg'] = res['reports']['run_time_total'] / res['reports']['run_count']

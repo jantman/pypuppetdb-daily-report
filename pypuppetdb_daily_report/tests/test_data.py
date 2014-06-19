@@ -132,6 +132,23 @@ FINAL_DATA = {
                 'with_skips': 3,
                 'with_no_successful_runs': 4,
                 'with_failures': 0,
+                'resources': {
+                    'changed': {
+                        (u'Exec', u'zookeeper ensemble check'): 1,
+                        (u'Service', u'winbind'): 2,
+                        (u'Service', u'zookeeper-server'): 2,
+                    },
+                    'failed': {
+                        (u'Exec', u'zookeeper ensemble check'): 1,
+                        (u'Package', u'libsmbios'): 2,
+                        (u'Package', u'srvadmin-idrac7'): 2,
+                    },
+                    'skipped': {
+                        (u'Augeas', u'disable dell yum plugin once OM is installed'): 2,
+                        (u'Exec', u'zookeeper ensemble check'): 1,
+                        (u'Service', u'dataeng'): 1,
+                    },
+                },
             },
         },
     },
