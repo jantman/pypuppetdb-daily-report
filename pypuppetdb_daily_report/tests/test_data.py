@@ -277,7 +277,6 @@ NODE_AGGR_NODES = {
             'with_skips': 1,
         },
     },
-    # TODO - left off here
     'node2.example.com': {
         'reports': {
             'run_count': 2,
@@ -487,4 +486,137 @@ EVENT_DATA = {
             u'Service',
         ),
     ],
+}
+
+FLAPPING_DATA = {
+    'metrics': {'foo': {'formatted': 'foo1'}, 'bar': {'formatted': 'bar1'}, 'baz': {'formatted': 'baz1'}},
+    'facts': {'puppetversion': {'3.4.1': 2, '3.4.2': 1, '3.6.1': 100}, 'facterversion': {'2.0.0': 102, '1.7.2': 1}},
+    'nodes': {
+        'node1.example.com': {
+            'reports': {
+                'run_count': 10,
+                'run_time_total': datetime.timedelta(seconds=1010),
+                'run_time_max': datetime.timedelta(seconds=1000),
+                'with_failures': 2,
+                'with_changes': 2,
+                'with_skips': 2,
+            },
+            'resources': {
+                'changed': {
+                    (u'Exec', u'zookeeper ensemble check'): 10,
+                    (u'Package', u'libsmbios'): 5,
+                    (u'Package', u'srvadmin-idrac7'): 4,
+                    (u'Service', u'dataeng'): 10,
+                },
+                'failed': {},
+                'skipped': {},
+            },
+        },
+        'node2.example.com': {
+            'reports': {
+                'run_count': 10,
+                'run_time_total': datetime.timedelta(seconds=100),
+                'run_time_max': datetime.timedelta(seconds=100),
+                'with_failures': 1,
+                'with_changes': 1,
+                'with_skips': 1,
+            },
+            'resources': {
+                'changed': {
+                    (u'Exec', u'zookeeper ensemble check'): 10,
+                    (u'Package', u'libsmbios'): 9,
+                    (u'Package', u'srvadmin-idrac7'): 4,
+                    (u'Service', u'dataeng'): 10,
+                    (u'Service', u'winbind'): 5,
+                },
+                'failed': {},
+                'skipped': {},
+            },
+        },
+        'node3.example.com': {
+            'reports': {
+                'run_count': 10,
+                'run_time_total': datetime.timedelta(seconds=500),
+                'run_time_max': datetime.timedelta(seconds=500),
+                'with_failures': 0,
+                'with_changes': 1,
+                'with_skips': 0,
+            },
+            'resources': {
+                'changed': {
+                    (u'Exec', u'zookeeper ensemble check'): 10,
+                    (u'Package', u'libsmbios'): 11,
+                    (u'Package', u'srvadmin-idrac7'): 1,
+                    (u'Service', u'dataeng'): 5,
+                    (u'Service', u'winbind'): 6,
+                    (u'Service', u'zookeeper-server'): 9,
+                },
+                'failed': {},
+                'skipped': {},
+            },
+        },
+        'node4.example.com': {
+            'reports': {
+                'run_count': 10,
+                'run_time_total': datetime.timedelta(seconds=600),
+                'run_time_max': datetime.timedelta(seconds=500),
+                'with_failures': 5,
+                'with_changes': 0,
+                'with_skips': 0,
+            },
+            'resources': {
+                'changed': {
+                    (u'Exec', u'zookeeper ensemble check'): 10,
+                    (u'Package', u'libsmbios'): 1,
+                    (u'Package', u'srvadmin-idrac7'): 4,
+                    (u'Service', u'winbind'): 4,
+                },
+                'failed': {},
+                'skipped': {},
+            },
+        },
+        'node5.example.com': {
+            'reports': {
+                'run_count': 10,
+                'run_time_total': datetime.timedelta(),
+                'run_time_max': datetime.timedelta(),
+                'with_failures': 0,
+                'with_changes': 0,
+                'with_skips': 0,
+            },
+            'resources': {
+                'changed': {
+                    (u'Exec', u'zookeeper ensemble check'): 5,
+                    (u'Package', u'libsmbios'): 3,
+                    (u'Package', u'srvadmin-idrac7'): 3,
+                    (u'Service', u'winbind'): 4,
+                    (u'Service', u'zookeeper-server'): 7,
+                },
+                'failed': {},
+                'skipped': {},
+            },
+        },
+        'node6.example.com': {
+            'reports': {
+                'run_count': 10,
+                'run_time_total': datetime.timedelta(seconds=100),
+                'run_time_max': datetime.timedelta(seconds=90),
+                'with_failures': 7,
+                'with_changes': 2,
+                'with_skips': 7,
+            },
+            'resources': {
+                'changed': {
+                    (u'Augeas', u'disable dell yum plugin once OM is installed'): 10,
+                    (u'Exec', u'zookeeper ensemble check'): 8,
+                    (u'Package', u'libsmbios'): 4,
+                    (u'Package', u'srvadmin-idrac7'): 2,
+                    (u'Service', u'winbind'): 1,
+                    (u'Service', u'zookeeper-server'): 6,
+                },
+                'failed': {},
+                'skipped': {},
+            },
+        },
+    },
 }

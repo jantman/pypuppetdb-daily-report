@@ -1087,6 +1087,28 @@ class Test_aggregate_data_for_timespan:
         assert result['nodes']['with_skips'] == 0
         assert result['nodes']['with_too_few_runs'] == 0
 
+    def test_node_flapping_resources(self):
+        """
+        any resources changed in >= 45% of reports for a node
+        this should be resource -> number of nodes
+        """
+        data = deepcopy(test_data.FLAPPING_DATA)
+        data.pop('aggregate', None)
+
+        expected = {
+            (u'Augeas', u'disable dell yum plugin once OM is installed'): 1,
+            (u'Exec', u'zookeeper ensemble check'): 6,
+            (u'Package', u'libsmbios'): 3,
+            (u'Service', u'dataeng'): 3,
+            (u'Service', u'winbind'): 2,
+            (u'Service', u'zookeeper-server'): 3,
+        }
+
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
+            result = pdr.aggregate_data_for_timespan(data)
+
+        assert result['nodes']['resources'] == expected
+
     def test_test_data(self):
         """
         Make sure test_data.FINAL_DATA is accurate
