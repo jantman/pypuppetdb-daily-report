@@ -152,7 +152,7 @@ def filter_resource_dict_sort(d):
     Used to sort a dictionary of resources, tuple-of-strings key and int value,
     sorted reverse by value and alphabetically by key within each value set.
     """
-    items = list(d.iteritems())
+    items = list(d.items())
     keyfunc = lambda x: tuple([-x[1]] + list(x[0]))
     return OrderedDict(sorted(items, key=keyfunc))
 
