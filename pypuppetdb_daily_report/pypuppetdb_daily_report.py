@@ -340,13 +340,14 @@ def aggregate_data_for_timespan(data):
             for key in ['failed', 'changed', 'skipped']:
                 if key in data['nodes'][node]['resources']:
                     for tup in data['nodes'][node]['resources'][key]:
-                        print("got {k} {t}".format(k=key, t=tup))
-                        print(res['nodes']['resources']['failed'])
                         res['nodes']['resources'][key][tup] += 1
+                        res['reports']['resources'][key][tup] += data['nodes'][node]['resources'][key][tup]
 
     # flatten defaultdicts for serialization
     for key in res['nodes']['resources']:
         res['nodes']['resources'][key] = dict(res['nodes']['resources'][key])
+    for key in res['reports']['resources']:
+        res['reports']['resources'][key] = dict(res['reports']['resources'][key])
 
     if res['reports']['run_count'] != 0:
         res['reports']['run_time_avg'] = res['reports']['run_time_total'] / res['reports']['run_count']

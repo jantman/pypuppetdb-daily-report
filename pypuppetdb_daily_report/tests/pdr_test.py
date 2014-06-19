@@ -901,7 +901,8 @@ class Test_aggregate_data_for_timespan:
     def test_report_counts(self):
         data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
         data.pop('aggregate', None)
-        result = pdr.aggregate_data_for_timespan(data)
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
+            result = pdr.aggregate_data_for_timespan(data)
         assert result['reports']['run_count'] == 19
         assert result['reports']['run_time_total'] == datetime.timedelta(seconds=2310)
         assert result['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
@@ -923,7 +924,7 @@ class Test_aggregate_data_for_timespan:
         assert result['nodes']['with_changes'] == 4
         assert result['nodes']['with_skips'] == 3
 
-    def test_resource_counts(self):
+    def test_resource_node_counts(self):
         data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
         data.pop('aggregate', None)
 
@@ -950,6 +951,33 @@ class Test_aggregate_data_for_timespan:
 
         assert result['nodes']['resources'] == expected
 
+    def test_resource_report_counts(self):
+        data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
+        data.pop('aggregate', None)
+
+        expected = {
+            'changed': {
+                (u'Exec', u'zookeeper ensemble check'): 1,
+                (u'Service', u'winbind'): 2,
+                (u'Service', u'zookeeper-server'): 4,
+            },
+            'failed': {
+                (u'Exec', u'zookeeper ensemble check'): 1,
+                (u'Package', u'libsmbios'): 2,
+                (u'Package', u'srvadmin-idrac7'): 4,
+            },
+            'skipped': {
+                (u'Augeas', u'disable dell yum plugin once OM is installed'): 11,
+                (u'Exec', u'zookeeper ensemble check'): 1,
+                (u'Service', u'dataeng'): 1,
+            },
+        }
+
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
+            result = pdr.aggregate_data_for_timespan(data)
+
+        assert result['reports']['resources'] == expected
+
     def test_report_counts_divzero(self):
         data = {
             'nodes': {
@@ -965,7 +993,8 @@ class Test_aggregate_data_for_timespan:
                 },
             },
         }
-        result = pdr.aggregate_data_for_timespan(data)
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
+            result = pdr.aggregate_data_for_timespan(data)
         assert result['reports']['run_count'] == 0
         assert result['reports']['run_time_total'] == datetime.timedelta()
         assert result['reports']['run_time_max'] == datetime.timedelta()
@@ -983,7 +1012,8 @@ class Test_aggregate_data_for_timespan:
                 'node2.example.com': {},
             },
         }
-        result = pdr.aggregate_data_for_timespan(data)
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
+            result = pdr.aggregate_data_for_timespan(data)
         assert result['reports']['run_count'] == 0
         assert result['reports']['run_time_total'] == datetime.timedelta()
         assert result['reports']['run_time_max'] == datetime.timedelta()
@@ -1007,7 +1037,8 @@ class Test_aggregate_data_for_timespan:
                 },
             },
         }
-        result = pdr.aggregate_data_for_timespan(data)
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
+            result = pdr.aggregate_data_for_timespan(data)
         assert result['nodes']['with_no_report'] == 1
         assert result['nodes']['with_no_successful_runs'] == 1
         assert result['nodes']['with_50+%_failed'] == 0
@@ -1024,13 +1055,24 @@ class Test_aggregate_data_for_timespan:
                 'node2.example.com': {},
             },
         }
-        result = pdr.aggregate_data_for_timespan(data)
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
+            result = pdr.aggregate_data_for_timespan(data)
         assert result['nodes']['with_no_report'] == 2
         assert result['nodes']['with_no_successful_runs'] == 2
         assert result['nodes']['with_50+%_failed'] == 0
         assert result['nodes']['with_changes'] == 0
         assert result['nodes']['with_skips'] == 0
         assert result['nodes']['with_too_few_runs'] == 0
+
+    def test_test_data(self):
+        """
+        Make sure test_data.FINAL_DATA is accurate
+        """
+        data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
+        expected = data.pop('aggregate', None)
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
+            result = pdr.aggregate_data_for_timespan(data)
+        assert result == expected
 
 
 class Test_format_html:

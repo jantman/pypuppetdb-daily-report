@@ -76,7 +76,7 @@ FINAL_DATA = {
                         (u'Package', u'srvadmin-idrac7'): 2,
                     },
                     'skipped': {
-                        (u'Augeas', u'disable dell yum plugin once OM is installed'): 1,
+                        (u'Augeas', u'disable dell yum plugin once OM is installed'): 10,
                     },
                 },
             },
@@ -123,6 +123,23 @@ FINAL_DATA = {
                 'with_changes': 6,
                 'with_failures': 15,
                 'with_skips': 10,
+                'resources': {
+                    'changed': {
+                        (u'Exec', u'zookeeper ensemble check'): 1,
+                        (u'Service', u'winbind'): 2,
+                        (u'Service', u'zookeeper-server'): 4,
+                    },
+                    'failed': {
+                        (u'Exec', u'zookeeper ensemble check'): 1,
+                        (u'Package', u'libsmbios'): 2,
+                        (u'Package', u'srvadmin-idrac7'): 4,
+                    },
+                    'skipped': {
+                        (u'Augeas', u'disable dell yum plugin once OM is installed'): 11,
+                        (u'Exec', u'zookeeper ensemble check'): 1,
+                        (u'Service', u'dataeng'): 1,
+                    },
+                },
             },
             'nodes': {
                 'with_50+%_failed': 1,
@@ -131,7 +148,7 @@ FINAL_DATA = {
                 'with_too_few_runs': 4,
                 'with_skips': 3,
                 'with_no_successful_runs': 4,
-                'with_failures': 0,
+                'with_failures': 4,
                 'resources': {
                     'changed': {
                         (u'Exec', u'zookeeper ensemble check'): 1,
