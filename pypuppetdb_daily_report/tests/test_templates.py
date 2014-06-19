@@ -19,7 +19,7 @@ from . import test_data
 strip_whitespace_re = re.compile(r'\s+')
 
 
-def get_html(tmpl_name, src_mock, data, dates, hostname, start_date, end_date):
+def get_html(tmpl_name, src_mock, data, dates, hostname, start_date, end_date, run_info={}):
     with mock.patch('jinja2.loaders.PackageLoader.get_source', src_mock):
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 9):
             env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
@@ -31,6 +31,7 @@ def get_html(tmpl_name, src_mock, data, dates, hostname, start_date, end_date):
                                    hostname=hostname,
                                    start=start_date,
                                    end=end_date,
+                                   run_info=run_info,
                                    )
     stripped = strip_whitespace_re.sub('', html)
     return (html, stripped)
@@ -79,10 +80,21 @@ class Test_template_base:
         start_date = datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc)
         end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
 
-        html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date)
+        run_info = {
+            'version': '1.2.3',
+            'host': 'foobar',
+            'user': 'baz',
+            'date_s': '1234',
+        }
+
+        html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date, run_info=run_info)
 
         assert '<h1>daily puppet(db) run summary on foo.example.com for Tue Jun 03, 2014 to Tue Jun 10</h1>' in html
-        assert stripped == '<html><head></head><body><h1>dailypuppet(db)runsummaryonfoo.example.comforTueJun03,2014toTueJun10</h1>=metrics.html==facts.html==reports.html==nodes.html=</body></html>'
+        expected = '<html><head></head><body><h1>dailypuppet(db)runsummaryonfoo.example.comforTueJun03,2014toTueJun10</h1>'
+        expected += '=metrics.html==facts.html==reports.html==nodes.html='
+        expected += '<br/><br/><p>Generatedbypypuppetdb_daily_reportv1.2.3onfoobarasbazat1234.</p>'
+        expected += '</body></html>'
+        assert stripped == expected
 
 
 class Test_template_metrics:

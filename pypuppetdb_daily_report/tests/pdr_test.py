@@ -40,6 +40,7 @@ import pytz
 from copy import deepcopy
 
 from pypuppetdb_daily_report import pypuppetdb_daily_report as pdr
+from pypuppetdb_daily_report import VERSION
 
 # fixtures
 from . import test_data
@@ -506,7 +507,7 @@ class Test_main:
 
 
 class Test_get_date_list:
-    """ tests for main() function """
+    """ tests for get_date_list() function """
 
     def test_simple(self):
         """ as default as possible, one test """
@@ -1046,8 +1047,25 @@ class Test_format_html:
         env_obj_mock.filters = {}
         env_mock.return_value = env_obj_mock
         pl_mock = mock.MagicMock(spec=PackageLoader, autospec=True)
-        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.Environment', env_mock), \
-                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.PackageLoader', pl_mock):
+        node_mock = mock.MagicMock(return_value='nodename')
+        getuser_mock = mock.MagicMock(return_value='username')
+        localzone_mock = mock.MagicMock()
+        localzone_mock.return_value = pytz.timezone('US/Eastern')
+
+        expected_run_info = {
+            'version': VERSION,
+            'user': 'username',
+            'host': 'nodename',
+            'date_s': '2014-06-11 04:15:43-0400 EDT',
+        }
+
+        with freeze_time("2014-06-11 08:15:43"), \
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.Environment', env_mock), \
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.PackageLoader', pl_mock), \
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.platform_node', node_mock), \
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.getuser', getuser_mock), \
+                mock.patch('tzlocal.get_localzone', localzone_mock):
+
             html = pdr.format_html('foo.example.com',
                                    self.dates,
                                    self.data,
@@ -1062,10 +1080,14 @@ class Test_format_html:
         assert env_obj_mock.filters['reportmetricname'] == pdr.filter_report_metric_name
         assert env_obj_mock.filters['reportmetricformat'] == pdr.filter_report_metric_format
         assert tmpl_mock.render.call_count == 1
+        assert node_mock.call_count == 1
+        assert getuser_mock.call_count == 1
+        print(tmpl_mock.render.call_args)
         assert tmpl_mock.render.call_args == mock.call(data=self.data,
                                                        dates=self.dates,
                                                        hostname='foo.example.com',
                                                        start=datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
-                                                       end=datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+                                                       end=datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc),
+                                                       run_info=expected_run_info,
                                                        )
         assert html == 'baz'

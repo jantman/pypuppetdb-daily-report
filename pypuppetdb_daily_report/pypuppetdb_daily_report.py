@@ -46,6 +46,8 @@ import pytz
 import tzlocal
 from ago import delta2dict
 from collections import defaultdict
+from platform import node as platform_node
+from getpass import getuser
 
 import pickle
 
@@ -126,11 +128,20 @@ def format_html(hostname, dates, date_data, start_date, end_date):
     env.filters['reportmetricname'] = filter_report_metric_name
     env.filters['reportmetricformat'] = filter_report_metric_format
     template = env.get_template('base.html')
+
+    run_info = {
+        'version': VERSION,
+        'date_s': datetime.datetime.now(pytz.utc).astimezone(tzlocal.get_localzone()).strftime('%Y-%m-%d %H:%M:%S%z %Z'),
+        'host': platform_node(),
+        'user': getuser(),
+    }
+
     html = template.render(data=date_data,
                            dates=dates,
                            hostname=hostname,
                            start=start_date,
-                           end=end_date
+                           end=end_date,
+                           run_info=run_info,
                            )
     return html
 
