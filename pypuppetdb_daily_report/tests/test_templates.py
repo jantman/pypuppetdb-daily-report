@@ -259,7 +259,7 @@ class Test_template_node_resources:
         end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
 
         html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date)
-        write_debug(html, stripped)
+        #write_debug(html, stripped)
 
         assert '<h3>Top Resource Changes, by Number of Nodes with Change</h3>' in html
         assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
@@ -272,9 +272,11 @@ class Test_template_node_resources:
         lines.append('<tr><th>Service[zookeeper-server]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('<tr><th>Exec[zookeeperensemblecheck]</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('</table>')
+        all_lines = ''
         for line in lines:
             assert line in stripped
-        assert ''.join(lines) in stripped
+            all_lines += line
+        assert all_lines in stripped
 
     def test_failed(self):
         sg = SourceGetter(self.template_name)
@@ -287,7 +289,7 @@ class Test_template_node_resources:
         end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
 
         html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date)
-        write_debug(html, stripped)
+        #write_debug(html, stripped)
 
         assert '<h3>Top Resource Failures, by Number of Nodes with Failure</h3>' in html
         assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html

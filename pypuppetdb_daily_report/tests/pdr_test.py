@@ -1150,7 +1150,6 @@ class Test_format_html:
         assert tmpl_mock.render.call_count == 1
         assert node_mock.call_count == 1
         assert getuser_mock.call_count == 1
-        print(tmpl_mock.render.call_args)
         assert tmpl_mock.render.call_args == mock.call(data=self.data,
                                                        dates=self.dates,
                                                        hostname='foo.example.com',

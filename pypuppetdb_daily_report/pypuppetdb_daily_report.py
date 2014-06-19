@@ -374,7 +374,6 @@ def aggregate_data_for_timespan(data):
             res['reports']['run_time_max'] = data['nodes'][node]['reports']['run_time_max']
 
         # resource counts across all nodes
-        print("doing node {n}".format(n=node))
         if 'resources' in data['nodes'][node]:
             for key in ['failed', 'changed', 'skipped']:
                 if key in data['nodes'][node]['resources']:
