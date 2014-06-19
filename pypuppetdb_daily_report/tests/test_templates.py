@@ -104,7 +104,7 @@ class Test_template_base:
 
         assert '<h1>daily puppet(db) run summary on foo.example.com for Tue Jun 03, 2014 to Tue Jun 10</h1>' in html
         expected = '<html><head></head><body><h1>dailypuppet(db)runsummaryonfoo.example.comforTueJun03,2014toTueJun10</h1>'
-        expected += '=metrics.html==facts.html==reports.html==nodes.html==node_resources.html='
+        expected += '=metrics.html==facts.html==reports.html==report_resources.html==nodes.html==node_resources.html='
         expected += '<br/><br/><p>Generatedbypypuppetdb_daily_reportv1.2.3onfoobarasbazat1234.</p>'
         expected += '</body></html>'
         assert stripped == expected
@@ -300,6 +300,72 @@ class Test_template_node_resources:
         lines.append('<tr><th>Exec[zookeeperensemblecheck]</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('</table>')
         lines.append('<!--endnode_resources.html-->')
+        all_lines = ''
+        for line in lines:
+            assert line in stripped
+            all_lines += line
+        assert all_lines in stripped
+
+
+class Test_template_report_resources:
+    """ test report_resources.html template """
+
+    dates = deepcopy(test_data.FINAL_DATES)
+    data = deepcopy(test_data.FINAL_DATA)
+    template_name = 'report_resources.html'
+
+    def test_changes(self):
+        sg = SourceGetter(self.template_name)
+        tmp_src_mock = sg.get_mock()
+
+        hostname = 'foo.example.com'
+        dates = self.dates
+        data = self.data
+        start_date = datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc)
+        end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+
+        html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date)
+
+        assert '<h3>Top Resource Changes, by Number of Reports with Change</h3>' in html
+        assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
+
+        lines = ['<!--beginreport_resources.html-->']
+        lines.append('<h3>TopResourceChanges,byNumberofReportswithChange</h3><tableborder="1">')
+        lines.append('<tr><th>&nbsp;</th><th>Tue06/10</th><th>Mon06/09</th><th>Sun06/08</th><th>Sat06/07</th><th>Fri06/06</th><th>Thu06/05</th><th>Wed06/04</th></tr>')
+        lines.append('<tr><th>TotalReports</th><td>19</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Service[zookeeper-server]</th><td>4(21%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Service[winbind]</th><td>2(11%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Exec[zookeeperensemblecheck]</th><td>1(5%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('</table>')
+        all_lines = ''
+        for line in lines:
+            assert line in stripped
+            all_lines += line
+        assert all_lines in stripped
+
+    def test_failed(self):
+        sg = SourceGetter(self.template_name)
+        tmp_src_mock = sg.get_mock()
+
+        hostname = 'foo.example.com'
+        dates = self.dates
+        data = self.data
+        start_date = datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc)
+        end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+
+        html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date)
+
+        assert '<h3>Top Resource Failures, by Number of Reports with Failure</h3>' in html
+        assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
+
+        lines = ['<h3>TopResourceFailures,byNumberofReportswithFailure</h3><tableborder="1">']
+        lines.append('<tr><th>&nbsp;</th><th>Tue06/10</th><th>Mon06/09</th><th>Sun06/08</th><th>Sat06/07</th><th>Fri06/06</th><th>Thu06/05</th><th>Wed06/04</th></tr>')
+        lines.append('<tr><th>TotalReports</th><td>19</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Package[srvadmin-idrac7]</th><td>4(21%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Package[libsmbios]</th><td>2(11%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Exec[zookeeperensemblecheck]</th><td>1(5%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('</table>')
+        lines.append('<!--endreport_resources.html-->')
         all_lines = ''
         for line in lines:
             assert line in stripped

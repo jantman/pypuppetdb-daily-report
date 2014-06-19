@@ -1,0 +1,67 @@
+<!-- begin report_resources.html -->
+<h3>Top Resource Changes, by Number of Reports with Change</h3>
+<table border="1">
+<tr><th>&nbsp;</th>{% for date_s in dates %}<th>{{ date_s }}</th>{% endfor %}</tr>
+  <tr>
+  <th>Total Reports</th>
+  {% for date_s in dates %}
+    {% if 'aggregate' in data[date_s] and 'reports' in data[date_s]['aggregate'] and 'run_count' in data[date_s]['aggregate']['reports'] and data[date_s]['aggregate']['reports']['run_count'] > 0 %}
+    <td>{{ data[date_s]['aggregate']['reports']['run_count'] }}</td>
+    {% else %}
+    <td>&nbsp;</td>
+    {% endif %}
+  {% endfor %}
+  </tr>
+{% for res_type, res_title in data[dates[0]]['aggregate']['reports']['resources']['changed']|resourcedictsort  %}
+{% set res_tup = (res_type, res_title) %}
+  <tr>
+  <th>{{ res_tup[0] }}[{{ res_tup[1] }}]</th>
+  {% for date_s in dates %}
+    <td>
+    {% if 'aggregate' in data[date_s] and 'reports' in data[date_s]['aggregate'] and 'resources' in data[date_s]['aggregate']['reports'] and 'changed' in data[date_s]['aggregate']['reports']['resources'] and res_tup in data[date_s]['aggregate']['reports']['resources']['changed'] %}
+      {{ data[date_s]['aggregate']['reports']['resources']['changed'][res_tup]|reportmetricformat }}
+      {% if data[date_s]['aggregate']['reports']['run_count'] > 0 %}
+        {{ '({0:.0%})'.format(data[date_s]['aggregate']['reports']['resources']['changed'][res_tup]/data[date_s]['aggregate']['reports']['run_count']) }}
+      {% endif %}
+    {% else %}
+      &nbsp;
+    {% endif %}
+    </td>
+  {% endfor %}
+  </tr>
+{% endfor %}
+</table>
+
+<h3>Top Resource Failures, by Number of Reports with Failure</h3>
+<table border="1">
+<tr><th>&nbsp;</th>{% for date_s in dates %}<th>{{ date_s }}</th>{% endfor %}</tr>
+  <tr>
+  <th>Total Reports</th>
+  {% for date_s in dates %}
+    {% if 'aggregate' in data[date_s] and 'reports' in data[date_s]['aggregate'] and 'run_count' in data[date_s]['aggregate']['reports'] and data[date_s]['aggregate']['reports']['run_count'] > 0 %}
+    <td>{{ data[date_s]['aggregate']['reports']['run_count'] }}</td>
+    {% else %}
+    <td>&nbsp;</td>
+    {% endif %}
+  {% endfor %}
+  </tr>
+{% for res_type, res_title in data[dates[0]]['aggregate']['reports']['resources']['failed']|resourcedictsort  %}
+{% set res_tup = (res_type, res_title) %}
+  <tr>
+  <th>{{ res_tup[0] }}[{{ res_tup[1] }}]</th>
+  {% for date_s in dates %}
+    <td>
+    {% if 'aggregate' in data[date_s] and 'reports' in data[date_s]['aggregate'] and 'resources' in data[date_s]['aggregate']['reports'] and 'failed' in data[date_s]['aggregate']['reports']['resources'] and res_tup in data[date_s]['aggregate']['reports']['resources']['failed'] %}
+      {{ data[date_s]['aggregate']['reports']['resources']['failed'][res_tup]|reportmetricformat }}
+      {% if data[date_s]['aggregate']['reports']['run_count'] > 0 %}
+        {{ '({0:.0%})'.format(data[date_s]['aggregate']['reports']['resources']['failed'][res_tup]/data[date_s]['aggregate']['reports']['run_count']) }}
+      {% endif %}
+    {% else %}
+      &nbsp;
+    {% endif %}
+    </td>
+  {% endfor %}
+  </tr>
+{% endfor %}
+</table>
+<!-- end report_resources.html -->
