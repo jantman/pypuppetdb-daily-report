@@ -91,7 +91,7 @@ class Test_template_base:
 
         assert '<h1>daily puppet(db) run summary on foo.example.com for Tue Jun 03, 2014 to Tue Jun 10</h1>' in html
         expected = '<html><head></head><body><h1>dailypuppet(db)runsummaryonfoo.example.comforTueJun03,2014toTueJun10</h1>'
-        expected += '=metrics.html==facts.html==reports.html==nodes.html='
+        expected += '=metrics.html==facts.html==reports.html==nodes.html==node_resources.html='
         expected += '<br/><br/><p>Generatedbypypuppetdb_daily_reportv1.2.3onfoobarasbazat1234.</p>'
         expected += '</body></html>'
         assert stripped == expected
@@ -226,3 +226,38 @@ class Test_template_nodes:
         assert '<tr><th>With<9Runsin24h</th><td>4(67%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
         assert '<tr><th>WithChanges</th><td>4(67%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
         assert '<tr><th>WithSkippedResources</th><td>3(50%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+
+
+class Test_template_node_resources:
+    """ test node_resources.html template """
+
+    dates = deepcopy(test_data.FINAL_DATES)
+    data = deepcopy(test_data.FINAL_DATA)
+    template_name = 'node_resources.html'
+
+    def test_run_node_counts(self):
+        sg = SourceGetter(self.template_name)
+        tmp_src_mock = sg.get_mock()
+
+        hostname = 'foo.example.com'
+        dates = self.dates
+        data = self.data
+        start_date = datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc)
+        end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+
+        html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date)
+        assert '<h3>Top Resource Changes, by Number of Nodes with Change</h3>' in html
+        assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
+        expected = '<tr><th>TotalNodes</th><td>6</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        expected =+ '<tr><th>Service[winbind]</th><td>2</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        expected =+ '<tr><th>Service[zookeeper-server]</th><td>2</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        expected =+ '<tr><th>Exec[zookeeperensemblecheck]</th><td>1</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert expected in stripped
+
+        assert '<h3>Top Resource Failures, by Number of Nodes with Failure</h3>' in html
+        assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
+        expected = '<tr><th>TotalNodes</th><td>6</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        expected =+ '<tr><th>Package[libsmbios]</th><td>2</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        expected =+ '<tr><th>Package[srvadmin-idrac7]</th><td>2</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        expected =+ '<tr><th>Exec[zookeeperensemblecheck]</th><td>1</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' in stripped
+        assert expected in stripped
