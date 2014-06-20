@@ -123,7 +123,7 @@ def format_html(hostname, dates, date_data, start_date, end_date):
     :param end_date: end of time period that data is for
     :type end_date: Datetime
     """
-    env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
+    env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'), extensions=['jinja2.ext.loopcontrols'])
     env.filters['reportmetricname'] = filter_report_metric_name
     env.filters['reportmetricformat'] = filter_report_metric_format
     env.filters['resourcedictsort'] = filter_resource_dict_sort

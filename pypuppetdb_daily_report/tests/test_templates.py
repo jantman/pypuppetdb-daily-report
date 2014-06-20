@@ -28,7 +28,7 @@ def get_html(tmpl_name, src_mock, data, dates, hostname, start_date, end_date, c
 
     with mock.patch('jinja2.loaders.PackageLoader.get_source', src_mock):
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 9):
-            env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
+            env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'), extensions=['jinja2.ext.loopcontrols'])
             env.filters['reportmetricname'] = pdr.filter_report_metric_name
             env.filters['reportmetricformat'] = pdr.filter_report_metric_format
             env.filters['resourcedictsort'] = pdr.filter_resource_dict_sort
