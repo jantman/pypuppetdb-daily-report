@@ -13,6 +13,7 @@
   {% endfor %}
   </tr>
 {% for res_type, res_title in data[dates[0]]['aggregate']['reports']['resources']['changed']|resourcedictsort  %}
+{% if loop.index > config['num_rows'] %}{% break %}{% endif %}
 {% set res_tup = (res_type, res_title) %}
   <tr>
   <th>{{ res_tup[0] }}[{{ res_tup[1] }}]</th>
@@ -46,6 +47,7 @@
   {% endfor %}
   </tr>
 {% for res_type, res_title in data[dates[0]]['aggregate']['reports']['resources']['failed']|resourcedictsort  %}
+{% if loop.index > config['num_rows'] %}{% break %}{% endif %}
 {% set res_tup = (res_type, res_title) %}
   <tr>
   <th>{{ res_tup[0] }}[{{ res_tup[1] }}]</th>

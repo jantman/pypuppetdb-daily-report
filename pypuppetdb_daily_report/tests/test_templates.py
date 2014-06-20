@@ -20,10 +20,15 @@ from . import test_data
 strip_whitespace_re = re.compile(r'\s+')
 
 
-def get_html(tmpl_name, src_mock, data, dates, hostname, start_date, end_date, run_info={}):
+def get_html(tmpl_name, src_mock, data, dates, hostname, start_date, end_date, config={}, run_info={}):
+    if 'num_rows' not in config:
+        config['num_rows'] = 10
+    config['start'] = start_date
+    config['end'] = end_date
+
     with mock.patch('jinja2.loaders.PackageLoader.get_source', src_mock):
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 9):
-            env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
+            env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'), extensions=['jinja2.ext.loopcontrols'])
             env.filters['reportmetricname'] = pdr.filter_report_metric_name
             env.filters['reportmetricformat'] = pdr.filter_report_metric_format
             env.filters['resourcedictsort'] = pdr.filter_resource_dict_sort
@@ -31,8 +36,7 @@ def get_html(tmpl_name, src_mock, data, dates, hostname, start_date, end_date, r
             html = template.render(data=data,
                                    dates=dates,
                                    hostname=hostname,
-                                   start=start_date,
-                                   end=end_date,
+                                   config=config,
                                    run_info=run_info,
                                    )
     stripped = strip_whitespace_re.sub('', html)
@@ -277,6 +281,35 @@ class Test_template_node_resources:
             all_lines += line
         assert all_lines in stripped
 
+    def test_changes_limit(self):
+        sg = SourceGetter(self.template_name)
+        tmp_src_mock = sg.get_mock()
+
+        hostname = 'foo.example.com'
+        dates = self.dates
+        data = self.data
+        start_date = datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc)
+        end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+
+        html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date, config={'num_rows': 2})
+
+        assert '<h3>Top Resource Changes, by Number of Nodes with Change</h3>' in html
+        assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
+
+        lines = ['<!--beginnode_resources.html-->']
+        lines.append('<h3>TopResourceChanges,byNumberofNodeswithChange</h3><tableborder="1">')
+        lines.append('<tr><th>&nbsp;</th><th>Tue06/10</th><th>Mon06/09</th><th>Sun06/08</th><th>Sat06/07</th><th>Fri06/06</th><th>Thu06/05</th><th>Wed06/04</th></tr>')
+        lines.append('<tr><th>TotalNodes</th><td>6</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Service[winbind]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Service[zookeeper-server]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('</table>')
+        all_lines = ''
+        for line in lines:
+            assert line in stripped
+            all_lines += line
+        assert all_lines in stripped
+        assert 'Exec[zookeeperensemblecheck]' not in html
+
     def test_failed(self):
         sg = SourceGetter(self.template_name)
         tmp_src_mock = sg.get_mock()
@@ -304,6 +337,34 @@ class Test_template_node_resources:
             assert line in stripped
             all_lines += line
         assert all_lines in stripped
+
+    def test_failed_limit(self):
+        sg = SourceGetter(self.template_name)
+        tmp_src_mock = sg.get_mock()
+
+        hostname = 'foo.example.com'
+        dates = self.dates
+        data = self.data
+        start_date = datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc)
+        end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+
+        html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date, config={'num_rows': 2})
+
+        assert '<h3>Top Resource Failures, by Number of Nodes with Failure</h3>' in html
+        assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
+
+        lines = ['<h3>TopResourceFailures,byNumberofNodeswithFailure</h3><tableborder="1">']
+        lines.append('<tr><th>&nbsp;</th><th>Tue06/10</th><th>Mon06/09</th><th>Sun06/08</th><th>Sat06/07</th><th>Fri06/06</th><th>Thu06/05</th><th>Wed06/04</th></tr>')
+        lines.append('<tr><th>TotalNodes</th><td>6</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Package[libsmbios]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Package[srvadmin-idrac7]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('</table>')
+        all_lines = ''
+        for line in lines:
+            assert line in stripped
+            all_lines += line
+        assert all_lines in stripped
+        assert 'Exec[zookeeperensemblecheck]' not in html
 
     def test_flapping(self):
         sg = SourceGetter(self.template_name)
@@ -346,6 +407,47 @@ class Test_template_node_resources:
             all_lines += line
         assert all_lines in stripped
 
+    def test_flapping_limit(self):
+        sg = SourceGetter(self.template_name)
+        tmp_src_mock = sg.get_mock()
+
+        flapping = {
+            ('Aaa', 'zab'): 2,
+            ('Aaa', 'zac'): 2,
+            ('Ccc', 'zaa'): 2,
+            ('Foo', 'bar'): 6,
+            ('Zzz', 'zzz'): 1,
+        }
+
+        hostname = 'foo.example.com'
+        dates = self.dates
+        data = self.data
+        data['Tue 06/10']['aggregate']['nodes']['resources']['flapping'] = flapping
+        start_date = datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc)
+        end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+
+        html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date, config={'num_rows': 2})
+
+        assert '<h3>Top Flapping Resources, by Number of Nodes</h3>' in html
+        assert '<p>Flapping defined as a resource changed in at least 45% of runs on a node.</p>' in html
+        assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
+
+        lines = ['<h3>TopFlappingResources,byNumberofNodes</h3><p>Flappingdefinedasaresourcechangedinatleast45%ofrunsonanode.</p><tableborder="1">']
+        lines.append('<tr><th>&nbsp;</th><th>Tue06/10</th><th>Mon06/09</th><th>Sun06/08</th><th>Sat06/07</th><th>Fri06/06</th><th>Thu06/05</th><th>Wed06/04</th></tr>')
+        lines.append('<tr><th>TotalNodes</th><td>6</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Foo[bar]</th><td>6(100%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Aaa[zab]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('</table>')
+        lines.append('<!--endnode_resources.html-->')
+        all_lines = ''
+        for line in lines:
+            assert line in stripped
+            all_lines += line
+        assert all_lines in stripped
+        assert 'Aaa[zac]' not in html
+        assert 'Ccc[zaa]' not in html
+        assert 'Zzz[zzz]' not in html
+
 
 class Test_template_report_resources:
     """ test report_resources.html template """
@@ -383,6 +485,35 @@ class Test_template_report_resources:
             all_lines += line
         assert all_lines in stripped
 
+    def test_changes_limit(self):
+        sg = SourceGetter(self.template_name)
+        tmp_src_mock = sg.get_mock()
+
+        hostname = 'foo.example.com'
+        dates = self.dates
+        data = self.data
+        start_date = datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc)
+        end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+
+        html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date, config={'num_rows': 2})
+
+        assert '<h3>Top Resource Changes, by Number of Reports with Change</h3>' in html
+        assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
+
+        lines = ['<!--beginreport_resources.html-->']
+        lines.append('<h3>TopResourceChanges,byNumberofReportswithChange</h3><tableborder="1">')
+        lines.append('<tr><th>&nbsp;</th><th>Tue06/10</th><th>Mon06/09</th><th>Sun06/08</th><th>Sat06/07</th><th>Fri06/06</th><th>Thu06/05</th><th>Wed06/04</th></tr>')
+        lines.append('<tr><th>TotalReports</th><td>19</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Service[zookeeper-server]</th><td>4(21%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Service[winbind]</th><td>2(11%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('</table>')
+        all_lines = ''
+        for line in lines:
+            assert line in stripped
+            all_lines += line
+        assert all_lines in stripped
+        assert 'Exec[zookeeperensemblecheck]' not in html
+
     def test_failed(self):
         sg = SourceGetter(self.template_name)
         tmp_src_mock = sg.get_mock()
@@ -411,3 +542,32 @@ class Test_template_report_resources:
             assert line in stripped
             all_lines += line
         assert all_lines in stripped
+
+    def test_failed_limit(self):
+        sg = SourceGetter(self.template_name)
+        tmp_src_mock = sg.get_mock()
+
+        hostname = 'foo.example.com'
+        dates = self.dates
+        data = self.data
+        start_date = datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc)
+        end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+
+        html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date, config={'num_rows': 2})
+
+        assert '<h3>Top Resource Failures, by Number of Reports with Failure</h3>' in html
+        assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
+
+        lines = ['<h3>TopResourceFailures,byNumberofReportswithFailure</h3><tableborder="1">']
+        lines.append('<tr><th>&nbsp;</th><th>Tue06/10</th><th>Mon06/09</th><th>Sun06/08</th><th>Sat06/07</th><th>Fri06/06</th><th>Thu06/05</th><th>Wed06/04</th></tr>')
+        lines.append('<tr><th>TotalReports</th><td>19</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Package[srvadmin-idrac7]</th><td>4(21%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Package[libsmbios]</th><td>2(11%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('</table>')
+        lines.append('<!--endreport_resources.html-->')
+        all_lines = ''
+        for line in lines:
+            assert line in stripped
+            all_lines += line
+        assert all_lines in stripped
+        assert 'Exec[zookeeperensemblecheck]' not in html

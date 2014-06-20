@@ -56,8 +56,7 @@ logging.basicConfig(level=logging.ERROR, format=FORMAT)
 logger = logging.getLogger(__name__)
 
 # these will probably be made configurable in the future
-TOP_MODULES_COUNT = 10
-TOP_RESOURCES_COUNT = 10
+NUM_RESULT_ROWS = 10
 RUNS_PER_DAY = 40
 FACTS = ['puppetversion', 'facterversion', 'lsbdistdescription']
 
@@ -124,7 +123,7 @@ def format_html(hostname, dates, date_data, start_date, end_date):
     :param end_date: end of time period that data is for
     :type end_date: Datetime
     """
-    env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
+    env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'), extensions=['jinja2.ext.loopcontrols'])
     env.filters['reportmetricname'] = filter_report_metric_name
     env.filters['reportmetricformat'] = filter_report_metric_format
     env.filters['resourcedictsort'] = filter_resource_dict_sort
@@ -137,11 +136,16 @@ def format_html(hostname, dates, date_data, start_date, end_date):
         'user': getuser(),
     }
 
+    config = {
+        'start': start_date,
+        'end': end_date,
+        'num_rows': NUM_RESULT_ROWS,
+    }
+
     html = template.render(data=date_data,
                            dates=dates,
                            hostname=hostname,
-                           start=start_date,
-                           end=end_date,
+                           config=config,
                            run_info=run_info,
                            )
     return html

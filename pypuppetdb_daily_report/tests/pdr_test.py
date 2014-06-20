@@ -1203,11 +1203,16 @@ class Test_format_html:
         assert tmpl_mock.render.call_count == 1
         assert node_mock.call_count == 1
         assert getuser_mock.call_count == 1
+        expected_config = {
+            'start': datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
+            'end': datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc),
+            'num_rows': 10,
+
+        }
         assert tmpl_mock.render.call_args == mock.call(data=self.data,
                                                        dates=self.dates,
                                                        hostname='foo.example.com',
-                                                       start=datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
-                                                       end=datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc),
+                                                       config=expected_config,
                                                        run_info=expected_run_info,
                                                        )
         assert html == 'baz'
