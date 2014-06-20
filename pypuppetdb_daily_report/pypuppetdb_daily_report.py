@@ -264,15 +264,10 @@ def query_data_for_timespan(pdb, start, end):
     logger.debug("querying nodes")
     nodes = pdb.nodes()
     res['nodes'] = {}
-    logger.critical("CRITICAL - debugging code still in place, node results limited")
-    count = 0  # DEBUG
     for node in nodes:
         logger.debug("working node {node}".format(node=node.name))
         node_data = query_data_for_node(pdb, node, start, end)
         res['nodes'][node.name] = node_data
-        if count > 5:
-            break
-        count += 1
 
     logger.debug("got {num} nodes".format(num=len(res['nodes'])))
 
@@ -542,10 +537,9 @@ def send_mail(html, dry_run=False):
     :type dry_run: boolean
     """
     if dry_run:
-        logger.info("would have sent: {body}".format(body=html))
-        with open('debug.html', 'w') as fh:
+        with open('output.html', 'w') as fh:
             fh.write(html)
-        print("DEBUG - wrote to debug.html")
+        logger.warning("DRY RUN - not sending mail; wrote body to ./output.html")
     else:
         logger.debug("sending mail")
     return True
