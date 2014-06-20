@@ -137,11 +137,15 @@ def format_html(hostname, dates, date_data, start_date, end_date):
         'user': getuser(),
     }
 
+    config = {
+        'start': start_date,
+        'end': end_date,
+    }
+
     html = template.render(data=date_data,
                            dates=dates,
                            hostname=hostname,
-                           start=start_date,
-                           end=end_date,
+                           config=config,
                            run_info=run_info,
                            )
     return html
