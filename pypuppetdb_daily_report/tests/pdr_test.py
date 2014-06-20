@@ -562,14 +562,25 @@ class Test_send_mail:
 
     def test_dry_run(self):
         logger_mock = mock.MagicMock()
+        mock_open = mock.mock_open()
 
-        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
+        if sys.version_info[0] == 3:
+            mock_target = 'builtins.open'
+        else:
+            mock_target = '__builtin__.open'
+
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock), \
+                mock.patch(mock_target, mock_open, create=True):
             result = pdr.send_mail('foo bar baz', dry_run=True)
 
         assert result == True
-        assert logger_mock.debug.call_count == 0
-        assert logger_mock.info.call_count == 1
-        assert logger_mock.info.call_args == mock.call('would have sent: foo bar baz')
+        assert logger_mock.warning.call_count == 1
+        assert logger_mock.warning.call_args == mock.call("DRY RUN - not sending mail; wrote body to ./output.html")
+        assert mock_open.call_count == 1
+        assert mock_open.call_args == mock.call('output.html', 'w')
+        fh = mock_open.return_value.__enter__.return_value
+        assert fh.write.call_count == 1
+        assert fh.write.call_args == mock.call('foo bar baz')
 
     def test_send(self):
         logger_mock = mock.MagicMock()
@@ -580,7 +591,6 @@ class Test_send_mail:
         assert result == True
         assert logger_mock.debug.call_count == 1
         assert logger_mock.debug.call_args == mock.call('sending mail')
-        assert logger_mock.info.call_count == 0
 
 
 class Test_query_data_for_timespan:
@@ -743,6 +753,10 @@ class Test_query_data_for_node:
                                           )
         assert node_mock.reports.call_count == 1
         assert logger_mock.debug.call_count == 3
+        assert logger_mock.debug.call_args_list == [mock.call('querying node node1.example.com for timespan: 2014-06-10 04-00-00+0000 to 2014-06-11 03-59-59+0000'),
+                                                    mock.call('found first report before time period - start time is 2014-06-09 17:50:00+00:00'),
+                                                    mock.call('got 4 reports for node'),
+                                                    ]
         assert foo['reports']['run_count'] == 4
         assert foo['reports']['run_time_total'] == datetime.timedelta(seconds=1111)
         assert foo['reports']['run_time_max'] == datetime.timedelta(seconds=1000)

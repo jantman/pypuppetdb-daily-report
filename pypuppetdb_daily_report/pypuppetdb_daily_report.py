@@ -264,15 +264,10 @@ def query_data_for_timespan(pdb, start, end):
     logger.debug("querying nodes")
     nodes = pdb.nodes()
     res['nodes'] = {}
-    logger.critical("CRITICAL - debugging code still in place, node results limited")
-    count = 0  # DEBUG
     for node in nodes:
         logger.debug("working node {node}".format(node=node.name))
         node_data = query_data_for_node(pdb, node, start, end)
         res['nodes'][node.name] = node_data
-        if count > 5:
-            break
-        count += 1
 
     logger.debug("got {num} nodes".format(num=len(res['nodes'])))
 
@@ -401,8 +396,8 @@ def query_data_for_node(pdb, node, start, end):
     :param end: end of time period to get data for
     :type end: Datetime
     """
-    logger.debug("querying node {name} for timespan: {start} to {end}".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
-                                                                              end=end.strftime('%Y-%m-%d_%H-%M-%S'),
+    logger.debug("querying node {name} for timespan: {start} to {end}".format(start=start.strftime('%Y-%m-%d %H-%M-%S%z'),
+                                                                              end=end.strftime('%Y-%m-%d %H-%M-%S%z'),
                                                                               name=node.name,
                                                                               ))
     res = {}
@@ -423,7 +418,7 @@ def query_data_for_node(pdb, node, start, end):
             continue
         if rep.start < start:
             # reports are returned sorted desc by completion time of run
-            logger.debug("found last report - start time is {s}".format(s=rep.start))
+            logger.debug("found first report before time period - start time is {s}".format(s=rep.start))
             break
         res['reports']['run_count'] += 1
         res['reports']['run_time_total'] = res['reports']['run_time_total'] + rep.run_time
@@ -457,7 +452,7 @@ def query_data_for_node(pdb, node, start, end):
     for key in res['resources']:
         res['resources'][key] = dict(res['resources'][key])
 
-    logger.debug("got {num} reports for node".format(num=len(res['reports'])))
+    logger.debug("got {num} reports for node".format(num=res['reports']['run_count']))
 
     return res
 
@@ -542,10 +537,9 @@ def send_mail(html, dry_run=False):
     :type dry_run: boolean
     """
     if dry_run:
-        logger.info("would have sent: {body}".format(body=html))
-        with open('debug.html', 'w') as fh:
+        with open('output.html', 'w') as fh:
             fh.write(html)
-        print("DEBUG - wrote to debug.html")
+        logger.warning("DRY RUN - not sending mail; wrote body to ./output.html")
     else:
         logger.debug("sending mail")
     return True
