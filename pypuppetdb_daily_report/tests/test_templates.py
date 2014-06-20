@@ -299,7 +299,6 @@ class Test_template_node_resources:
         lines.append('<tr><th>Package[srvadmin-idrac7]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('<tr><th>Exec[zookeeperensemblecheck]</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('</table>')
-        lines.append('<!--endnode_resources.html-->')
         all_lines = ''
         for line in lines:
             assert line in stripped
@@ -310,9 +309,18 @@ class Test_template_node_resources:
         sg = SourceGetter(self.template_name)
         tmp_src_mock = sg.get_mock()
 
+        flapping = {
+            ('Aaa', 'zab'): 2,
+            ('Aaa', 'zac'): 2,
+            ('Ccc', 'zaa'): 2,
+            ('Foo', 'bar'): 6,
+            ('Zzz', 'zzz'): 1,
+        }
+
         hostname = 'foo.example.com'
         dates = self.dates
         data = self.data
+        data['Tue 06/10']['aggregate']['nodes']['resources']['flapping'] = flapping
         start_date = datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc)
         end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
 
@@ -325,10 +333,13 @@ class Test_template_node_resources:
         lines = ['<h3>TopFlappingResources,byNumberofNodes</h3><p>Flappingdefinedasaresourcechangedinatleast45%ofrunsonanode.</p><tableborder="1">']
         lines.append('<tr><th>&nbsp;</th><th>Tue06/10</th><th>Mon06/09</th><th>Sun06/08</th><th>Sat06/07</th><th>Fri06/06</th><th>Thu06/05</th><th>Wed06/04</th></tr>')
         lines.append('<tr><th>TotalNodes</th><td>6</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
-        lines.append('<tr><th>Service[winbind]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
-        lines.append('<tr><th>Service[zookeeper-server]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
-        lines.append('<tr><th>Exec[zookeeperensemblecheck]</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Foo[bar]</th><td>6(100%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Aaa[zab]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Aaa[zac]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Ccc[zaa]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Zzz[zzz]</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('</table>')
+        lines.append('<!--endnode_resources.html-->')
         all_lines = ''
         for line in lines:
             assert line in stripped

@@ -972,6 +972,7 @@ class Test_aggregate_data_for_timespan:
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
             result = pdr.aggregate_data_for_timespan(data)
 
+        result['nodes']['resources'].pop('flapping', None)  # test_node_flapping_resources()
         assert result['nodes']['resources'] == expected
 
     def test_resource_report_counts(self):
@@ -1107,7 +1108,7 @@ class Test_aggregate_data_for_timespan:
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
             result = pdr.aggregate_data_for_timespan(data)
 
-        assert result['nodes']['resources'] == expected
+        assert result['nodes']['resources']['flapping'] == expected
 
     def test_test_data(self):
         """

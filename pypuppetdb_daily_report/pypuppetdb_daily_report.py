@@ -306,7 +306,7 @@ def aggregate_data_for_timespan(data):
                     'with_no_successful_runs': 0,
                     'with_50+%_failed': 0,
                     'with_too_few_runs': 0,
-                    'resources': {'failed': defaultdict(int), 'changed': defaultdict(int), 'skipped': defaultdict(int)},
+                    'resources': {'failed': defaultdict(int), 'changed': defaultdict(int), 'skipped': defaultdict(int), 'flapping': defaultdict(int)},
                     }
 
     for node in data['nodes']:
@@ -352,6 +352,9 @@ def aggregate_data_for_timespan(data):
                     for tup in data['nodes'][node]['resources'][key]:
                         res['nodes']['resources'][key][tup] += 1
                         res['reports']['resources'][key][tup] += data['nodes'][node]['resources'][key][tup]
+                        # flapping resources, count of nodes
+                        if key == 'changed' and (float(data['nodes'][node]['resources'][key][tup]) >= (data['nodes'][node]['reports']['run_count'] * 0.45)):
+                            res['nodes']['resources']['flapping'][tup] += 1
 
     # flatten defaultdicts for serialization
     for key in res['nodes']['resources']:

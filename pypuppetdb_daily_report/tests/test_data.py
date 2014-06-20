@@ -165,6 +165,11 @@ FINAL_DATA = {
                         (u'Exec', u'zookeeper ensemble check'): 1,
                         (u'Service', u'dataeng'): 1,
                     },
+                    'flapping': {
+                        (u'Exec', u'zookeeper ensemble check'): 1,
+                        (u'Service', u'winbind'): 2,
+                        (u'Service', u'zookeeper-server'): 2,
+                    },
                 },
             },
         },
