@@ -376,6 +376,18 @@ NODE_AGGR_NODES = {
 
 EVENT_DATA = {
     '["=", "report", "hash1"]': [
+        Event(
+            u'node1.example.com',
+            u'otherstatus',
+            u'2014-06-18T13:02:54.122000Z',
+            u'14eaf89f52496f94bae336d454b60fac6189ff1b',
+            u'srvadmin-idrac7',
+            u'ensure',
+            u'failure message here',
+            u'present',
+            u'absent',
+            u'Package',
+        ),
     ],
     '["=", "report", "hash2"]': [
         Event(
