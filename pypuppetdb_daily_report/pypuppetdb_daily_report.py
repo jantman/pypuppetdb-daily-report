@@ -396,8 +396,8 @@ def query_data_for_node(pdb, node, start, end):
     :param end: end of time period to get data for
     :type end: Datetime
     """
-    logger.debug("querying node {name} for timespan: {start} to {end}".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
-                                                                              end=end.strftime('%Y-%m-%d_%H-%M-%S'),
+    logger.debug("querying node {name} for timespan: {start} to {end}".format(start=start.strftime('%Y-%m-%d %H-%M-%S%z'),
+                                                                              end=end.strftime('%Y-%m-%d %H-%M-%S%z'),
                                                                               name=node.name,
                                                                               ))
     res = {}
@@ -418,7 +418,7 @@ def query_data_for_node(pdb, node, start, end):
             continue
         if rep.start < start:
             # reports are returned sorted desc by completion time of run
-            logger.debug("found last report - start time is {s}".format(s=rep.start))
+            logger.debug("found first report before time period - start time is {s}".format(s=rep.start))
             break
         res['reports']['run_count'] += 1
         res['reports']['run_time_total'] = res['reports']['run_time_total'] + rep.run_time
@@ -452,7 +452,7 @@ def query_data_for_node(pdb, node, start, end):
     for key in res['resources']:
         res['resources'][key] = dict(res['resources'][key])
 
-    logger.debug("got {num} reports for node".format(num=len(res['reports'])))
+    logger.debug("got {num} reports for node".format(num=res['reports']['run_count']))
 
     return res
 

@@ -753,6 +753,10 @@ class Test_query_data_for_node:
                                           )
         assert node_mock.reports.call_count == 1
         assert logger_mock.debug.call_count == 3
+        assert logger_mock.debug.call_args_list == [mock.call('querying node node1.example.com for timespan: 2014-06-10 04-00-00+0000 to 2014-06-11 03-59-59+0000'),
+                                                    mock.call('found first report before time period - start time is 2014-06-09 17:50:00+00:00'),
+                                                    mock.call('got 4 reports for node'),
+                                                    ]
         assert foo['reports']['run_count'] == 4
         assert foo['reports']['run_time_total'] == datetime.timedelta(seconds=1111)
         assert foo['reports']['run_time_max'] == datetime.timedelta(seconds=1000)
