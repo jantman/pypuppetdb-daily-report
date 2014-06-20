@@ -989,6 +989,22 @@ class Test_aggregate_data_for_timespan:
         result['nodes']['resources'].pop('flapping', None)  # test_node_flapping_resources()
         assert result['nodes']['resources'] == expected
 
+    def test_missing_keys(self):
+        """ to get coverage on some missed branches """
+        data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
+        data.pop('aggregate', None)
+
+        # remove some keys
+        for n in data['nodes']:
+            data['nodes'][n]['reports'].pop('with_skips', None)
+            data['nodes'][n]['reports'].pop('run_time_total', None)
+
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 4):
+            result = pdr.aggregate_data_for_timespan(data)
+        # really just make sure it doesn't error out, and gives us a dict with some keys back
+        assert isinstance(result, dict)
+        assert len(result) > 1
+
     def test_resource_report_counts(self):
         data = deepcopy(test_data.FINAL_DATA['Tue 06/10'])
         data.pop('aggregate', None)
