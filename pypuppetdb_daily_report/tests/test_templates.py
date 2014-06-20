@@ -299,6 +299,46 @@ class Test_template_node_resources:
         lines.append('<tr><th>Package[srvadmin-idrac7]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('<tr><th>Exec[zookeeperensemblecheck]</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
         lines.append('</table>')
+        all_lines = ''
+        for line in lines:
+            assert line in stripped
+            all_lines += line
+        assert all_lines in stripped
+
+    def test_flapping(self):
+        sg = SourceGetter(self.template_name)
+        tmp_src_mock = sg.get_mock()
+
+        flapping = {
+            ('Aaa', 'zab'): 2,
+            ('Aaa', 'zac'): 2,
+            ('Ccc', 'zaa'): 2,
+            ('Foo', 'bar'): 6,
+            ('Zzz', 'zzz'): 1,
+        }
+
+        hostname = 'foo.example.com'
+        dates = self.dates
+        data = self.data
+        data['Tue 06/10']['aggregate']['nodes']['resources']['flapping'] = flapping
+        start_date = datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc)
+        end_date = datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc)
+
+        html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date)
+
+        assert '<h3>Top Flapping Resources, by Number of Nodes</h3>' in html
+        assert '<p>Flapping defined as a resource changed in at least 45% of runs on a node.</p>' in html
+        assert '<tr><th>&nbsp;</th><th>Tue 06/10</th><th>Mon 06/09</th><th>Sun 06/08</th><th>Sat 06/07</th><th>Fri 06/06</th><th>Thu 06/05</th><th>Wed 06/04</th></tr>' in html
+
+        lines = ['<h3>TopFlappingResources,byNumberofNodes</h3><p>Flappingdefinedasaresourcechangedinatleast45%ofrunsonanode.</p><tableborder="1">']
+        lines.append('<tr><th>&nbsp;</th><th>Tue06/10</th><th>Mon06/09</th><th>Sun06/08</th><th>Sat06/07</th><th>Fri06/06</th><th>Thu06/05</th><th>Wed06/04</th></tr>')
+        lines.append('<tr><th>TotalNodes</th><td>6</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Foo[bar]</th><td>6(100%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Aaa[zab]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Aaa[zac]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Ccc[zaa]</th><td>2(33%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('<tr><th>Zzz[zzz]</th><td>1(17%)</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>')
+        lines.append('</table>')
         lines.append('<!--endnode_resources.html-->')
         all_lines = ''
         for line in lines:

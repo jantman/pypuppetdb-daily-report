@@ -64,4 +64,38 @@
   </tr>
 {% endfor %}
 </table>
+
+<h3>Top Flapping Resources, by Number of Nodes</h3>
+<p>Flapping defined as a resource changed in at least 45% of runs on a node.</p>
+<table border="1">
+<tr><th>&nbsp;</th>{% for date_s in dates %}<th>{{ date_s }}</th>{% endfor %}</tr>
+  <tr>
+  <th>Total Nodes</th>
+  {% for date_s in dates %}
+    {% if (data[date_s]['nodes']|length) > 0 %}
+    <td>{{ data[date_s]['nodes']|length }}</td>
+    {% else %}
+    <td>&nbsp;</td>
+    {% endif %}
+  {% endfor %}
+  </tr>
+{% for res_type, res_title in data[dates[0]]['aggregate']['nodes']['resources']['flapping']|resourcedictsort  %}
+{% set res_tup = (res_type, res_title) %}
+  <tr>
+  <th>{{ res_tup[0] }}[{{ res_tup[1] }}]</th>
+  {% for date_s in dates %}
+    <td>
+    {% if 'aggregate' in data[date_s] and 'nodes' in data[date_s]['aggregate'] and 'resources' in data[date_s]['aggregate']['nodes'] and 'flapping' in data[date_s]['aggregate']['nodes']['resources'] and res_tup in data[date_s]['aggregate']['nodes']['resources']['flapping'] %}
+      {{ data[date_s]['aggregate']['nodes']['resources']['flapping'][res_tup]|reportmetricformat }}
+      {% if (data[date_s]['nodes']|length) > 0 %}
+        {{ '({0:.0%})'.format(data[date_s]['aggregate']['nodes']['resources']['flapping'][res_tup]/(data[date_s]['nodes']|length)) }}
+      {% endif %}
+    {% else %}
+      &nbsp;
+    {% endif %}
+    </td>
+  {% endfor %}
+  </tr>
+{% endfor %}
+</table>
 <!-- end node_resources.html -->
