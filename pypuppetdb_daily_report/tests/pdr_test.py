@@ -1206,6 +1206,7 @@ class Test_format_html:
         expected_config = {
             'start': datetime.datetime(2014, 6, 3, hour=0, minute=0, second=0, tzinfo=pytz.utc),
             'end': datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59, tzinfo=pytz.utc),
+            'num_rows': 10,
 
         }
         assert tmpl_mock.render.call_args == mock.call(data=self.data,

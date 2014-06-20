@@ -56,8 +56,7 @@ logging.basicConfig(level=logging.ERROR, format=FORMAT)
 logger = logging.getLogger(__name__)
 
 # these will probably be made configurable in the future
-TOP_MODULES_COUNT = 10
-TOP_RESOURCES_COUNT = 10
+NUM_RESULT_ROWS = 10
 RUNS_PER_DAY = 40
 FACTS = ['puppetversion', 'facterversion', 'lsbdistdescription']
 
@@ -140,6 +139,7 @@ def format_html(hostname, dates, date_data, start_date, end_date):
     config = {
         'start': start_date,
         'end': end_date,
+        'num_rows': NUM_RESULT_ROWS,
     }
 
     html = template.render(data=date_data,

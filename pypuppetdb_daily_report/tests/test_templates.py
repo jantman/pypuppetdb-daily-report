@@ -20,7 +20,12 @@ from . import test_data
 strip_whitespace_re = re.compile(r'\s+')
 
 
-def get_html(tmpl_name, src_mock, data, dates, hostname, start_date, end_date, run_info={}):
+def get_html(tmpl_name, src_mock, data, dates, hostname, start_date, end_date, config={}, run_info={}):
+    if 'num_rows' not in config:
+        config['num_rows'] = 10
+    config['start'] = start_date
+    config['end'] = end_date
+
     with mock.patch('jinja2.loaders.PackageLoader.get_source', src_mock):
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.RUNS_PER_DAY', 9):
             env = Environment(loader=PackageLoader('pypuppetdb_daily_report', 'templates'))
@@ -31,8 +36,7 @@ def get_html(tmpl_name, src_mock, data, dates, hostname, start_date, end_date, r
             html = template.render(data=data,
                                    dates=dates,
                                    hostname=hostname,
-                                   start=start_date,
-                                   end=end_date,
+                                   config=config,
                                    run_info=run_info,
                                    )
     stripped = strip_whitespace_re.sub('', html)
