@@ -5,8 +5,8 @@ from pypuppetdb_daily_report import VERSION
 pyver_requires = ['pypuppetdb>=0.1.0, <=1.0.0',
                   'anyjson>=0.3.0, <=1.0.0',
                   'Jinja2>=2.7.0, <=2.8.0',
-                  'pytz',
-                  'tzlocal>=1.1., <=2.0.0',
+                  'pytz>=2014.4',
+                  'tzlocal>=1.1.1, <=2.0.0',
                   'ago>=0.0.6, <=0.1.0',
                   ]
 
