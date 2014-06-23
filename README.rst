@@ -1,11 +1,11 @@
 pypuppetdb_daily_report
 =======================
 
-.. image:: https://pypip.in/v/pypuppetdb-daily-report/badge.png
-   :target: https://crate.io/packages/pypuppetdb-daily-report
+.. image:: https://pypip.in/v/pypuppetdb_daily_report/badge.png
+   :target: https://crate.io/packages/pypuppetdb_daily_report
 
-.. image:: https://pypip.in/d/pypuppetdb-daily-report/badge.png
-   :target: https://crate.io/packages/pypuppetdb-daily-report
+.. image:: https://pypip.in/d/pypuppetdb_daily_report/badge.png
+   :target: https://crate.io/packages/pypuppetdb_daily_report
 
 
 .. image:: https://secure.travis-ci.org/jantman/pypuppetdb-daily-report.png?branch=master
