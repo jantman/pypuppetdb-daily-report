@@ -85,7 +85,7 @@ def main(hostname, num_days=7, cache_dir=None, dry_run=False):
         end = query_date
         start = query_date - datetime.timedelta(days=1) + datetime.timedelta(seconds=1)
         date_s = (query_date - datetime.timedelta(hours=1)).astimezone(localtz).strftime('%a %m/%d')
-        date_data[date_s] = get_data_for_timespan(pdb, start, end, cache_dir=cache_dir)
+        date_data[date_s] = get_data_for_timespan(hostname, pdb, start, end, cache_dir=cache_dir)
         dates.append(date_s)
     html = format_html(hostname, dates, date_data, date_list[0], (date_list[-1] - datetime.timedelta(hours=23, minutes=59, seconds=59)))
     send_mail(html, dry_run=dry_run)
@@ -199,11 +199,13 @@ def filter_report_metric_format(o):
     return str(o)
 
 
-def get_data_for_timespan(pdb, start, end, cache_dir=None):
+def get_data_for_timespan(hostname, pdb, start, end, cache_dir=None):
     """
     Get the data for a specified timespan, from cache (if possible) or else
     from PuppetDB directly.
 
+    :param hostname: name of the puppetdb host we're connected to
+    :type hostname: string
     :param pdb: object representing a connected pypuppetdb instance
     :type pdb: one of the pypuppetdb.API classes
     :param start: beginning of time period to get data for
@@ -218,8 +220,9 @@ def get_data_for_timespan(pdb, start, end, cache_dir=None):
                                                                                               end=end.strftime('%Y-%m-%d_%H-%M-%S'),
                                                                                               ))
     if cache_dir is not None:
-        cache_filename = "data_{start}_{end}.pickle".format(start=start.strftime('%Y-%m-%d_%H-%M-%S'),
-                                                            end=end.strftime('%Y-%m-%d_%H-%M-%S'))
+        cache_filename = "data_{host}_{start}_{end}.pickle".format(host=hostname,
+                                                                   start=start.strftime('%Y-%m-%d_%H-%M-%S'),
+                                                                   end=end.strftime('%Y-%m-%d_%H-%M-%S'))
         cache_fpath = os.path.join(cache_dir, cache_filename)
         logger.debug("cache file: {fpath}".format(fpath=cache_fpath))
         if not os.path.exists(cache_dir):
