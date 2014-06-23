@@ -18,7 +18,7 @@ pypuppetdb_daily_report
 
 A daily run summary report for PuppetDB, written in Python using `nedap's pypuppetdb <https://github.com/nedap/pypuppetdb>`_ module.
 
-For an example of the current version's output, see `https://github.com/jantman/pypuppetdb-daily-report/raw/master/example_output.html <https://github.com/jantman/pypuppetdb-daily-report/raw/master/example_output.html>`_.
+For an example of the current version's output, see `https://rawgithub.com/jantman/pypuppetdb-daily-report/master/example_output.html <https://rawgithub.com/jantman/pypuppetdb-daily-report/master/example_output.html>`_.
 
 The report displays the following for the current point-in-time:
 
