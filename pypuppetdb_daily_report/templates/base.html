@@ -1,7 +1,7 @@
 <html>
   <head></head>
   <body>
-  <h1>daily puppet(db) run summary on {{ hostname }} for {{ config['start'].strftime('%a %b %d, %Y') }} to {{ config['end'].strftime('%a %b %d') }}</h1>
+  <h1>daily puppet(db) run summary on {{ hostname }} for {{ config['end'].strftime('%a %b %d, %Y') }}</h1>
   {% include 'metrics.html' %}
   {% include 'facts.html' %}
   {% include 'reports.html' %}

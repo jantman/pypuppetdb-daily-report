@@ -106,8 +106,8 @@ class Test_template_base:
 
         html, stripped = get_html(self.template_name, tmp_src_mock, data, dates, hostname, start_date, end_date, run_info=run_info)
 
-        assert '<h1>daily puppet(db) run summary on foo.example.com for Tue Jun 03, 2014 to Tue Jun 10</h1>' in html
-        expected = '<html><head></head><body><h1>dailypuppet(db)runsummaryonfoo.example.comforTueJun03,2014toTueJun10</h1>'
+        assert '<h1>daily puppet(db) run summary on foo.example.com for Tue Jun 10, 2014</h1>' in html
+        expected = '<html><head></head><body><h1>dailypuppet(db)runsummaryonfoo.example.comforTueJun10,2014</h1>'
         expected += '=metrics.html==facts.html==reports.html==report_resources.html==nodes.html==node_resources.html='
         expected += '<br/><br/><p>Generatedbypypuppetdb_daily_reportv1.2.3onfoobarasbazat1234.</p>'
         expected += '</body></html>'

@@ -61,6 +61,8 @@ class OptionsObject(object):
         self.host = None
         self.num_days = 7
         self.cache_dir = '/tmp/.pypuppetdb_daily_report'
+        self.to = None
+        self.to_str = None
 
 
 class FactObject(object):
@@ -146,6 +148,22 @@ class Test_parse_args:
         x = pdr.parse_args(argv)
         assert x.num_days == 14
 
+    def test_to(self):
+        """
+        Test the parse_args option parsing method with to address specified
+        """
+        argv = ['pypuppetdb_daily_report', '-t', 'foo@example.com']
+        x = pdr.parse_args(argv)
+        assert x.to == ['foo@example.com']
+
+    def test_to_multiple(self):
+        """
+        Test the parse_args option parsing method with multiple to addresses specified
+        """
+        argv = ['pypuppetdb_daily_report', '-t', 'foo@example.com,bar@example.com,baz@example.com']
+        x = pdr.parse_args(argv)
+        assert x.to == ['foo@example.com', 'bar@example.com', 'baz@example.com']
+
 
 class Test_console_entry_point:
     """ test console_entry_point """
@@ -155,6 +173,7 @@ class Test_console_entry_point:
         parse_args_mock = mock.MagicMock()
         opts_o = OptionsObject()
         opts_o.host = 'foobar'
+        opts_o.to = ['foo@example.com']
         parse_args_mock.return_value = opts_o
 
         main_mock = mock.MagicMock()
@@ -164,11 +183,17 @@ class Test_console_entry_point:
             pdr.console_entry_point()
         assert parse_args_mock.call_count == 1
         assert main_mock.call_count == 1
+        assert main_mock.call_args == mock.call('foobar',
+                                                to=['foo@example.com'],
+                                                num_days=7,
+                                                dry_run=False,
+                                                cache_dir='/tmp/.pypuppetdb_daily_report')
 
     def test_nohost(self):
         """ without a host specified """
         parse_args_mock = mock.MagicMock()
         opts_o = OptionsObject()
+        opts_o.to = ['foo@example.com']
         parse_args_mock.return_value = opts_o
         main_mock = mock.MagicMock()
 
@@ -186,6 +211,7 @@ class Test_console_entry_point:
         opts_o = OptionsObject()
         opts_o.host = 'foobar'
         opts_o.verbose = 1
+        opts_o.to = ['foo@example.com']
         parse_args_mock.return_value = opts_o
         logger_mock = mock.MagicMock()
         main_mock = mock.MagicMock()
@@ -205,6 +231,7 @@ class Test_console_entry_point:
         opts_o = OptionsObject()
         opts_o.host = 'foobar'
         opts_o.verbose = 2
+        opts_o.to = ['foo@example.com']
         parse_args_mock.return_value = opts_o
         logger_mock = mock.MagicMock()
         main_mock = mock.MagicMock()
@@ -217,6 +244,22 @@ class Test_console_entry_point:
         assert main_mock.call_count == 1
         assert logger_mock.setLevel.call_count == 1
         assert logger_mock.setLevel.call_args == mock.call(logging.DEBUG)
+
+    def test_no_to(self):
+        """ without dry-run or a to address """
+        parse_args_mock = mock.MagicMock()
+        opts_o = OptionsObject()
+        opts_o.host = 'foobar'
+        parse_args_mock.return_value = opts_o
+        main_mock = mock.MagicMock()
+
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.parse_args', parse_args_mock), \
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.main', main_mock), \
+                pytest.raises(SystemExit) as excinfo:
+            pdr.console_entry_point()
+        assert parse_args_mock.call_count == 1
+        assert main_mock.call_count == 0
+        assert excinfo.value.__str__() == "ERROR: you must either run with --dry-run or specify to address(es) with --to"
 
 
 class Test_get_dashboard_metrics:
@@ -483,7 +526,7 @@ class Test_main:
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.format_html', format_html_mock), \
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.send_mail', send_mail_mock), \
                 mock.patch('tzlocal.get_localzone', localzone_mock):
-            pdr.main('foobar')
+            pdr.main('foobar', to=['foo@example.com'])
         assert connect_mock.call_count == 1
         assert connect_mock.call_args == mock.call(host='foobar')
 
@@ -508,7 +551,7 @@ class Test_main:
                       )
         assert format_html_mock.call_args == r
         assert send_mail_mock.call_count == 1
-        assert send_mail_mock.call_args == mock.call('foo bar baz', dry_run=False)
+        assert send_mail_mock.call_args == mock.call(['foo@example.com'], 'daily puppet(db) run summary for foobar', 'foo bar baz', dry_run=False)
 
 
 class Test_get_date_list:
@@ -575,7 +618,7 @@ class Test_send_mail:
 
         with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock), \
                 mock.patch(mock_target, mock_open, create=True):
-            result = pdr.send_mail('foo bar baz', dry_run=True)
+            result = pdr.send_mail(None, 'foo bar baz', '<html></html>', dry_run=True)
 
         assert result == True
         assert logger_mock.warning.call_count == 1
@@ -584,17 +627,37 @@ class Test_send_mail:
         assert mock_open.call_args == mock.call('output.html', 'w')
         fh = mock_open.return_value.__enter__.return_value
         assert fh.write.call_count == 1
-        assert fh.write.call_args == mock.call('foo bar baz')
+        assert fh.write.call_args == mock.call('<html></html>')
 
     def test_send(self):
         logger_mock = mock.MagicMock()
+        mimemultipart_mock = mock.MagicMock()
+        mimetext_mock = mock.MagicMock()
+        smtp_mock = mock.MagicMock()
+        smtp_mock_res = mock.MagicMock()
+        smtp_mock.return_value = smtp_mock_res
+        node_mock = mock.MagicMock(return_value='nodename')
+        getuser_mock = mock.MagicMock(return_value='username')
 
-        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock):
-            result = pdr.send_mail('foo bar baz')
+        with mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock), \
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.MIMEMultipart', mimemultipart_mock), \
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.MIMEText', mimetext_mock), \
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.platform_node', node_mock), \
+                mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.getuser', getuser_mock), \
+                mock.patch('smtplib.SMTP', smtp_mock):
+            result = pdr.send_mail(['foo@example.com', 'bar@example.com'], 'foo bar baz', '<html></html>')
 
         assert result == True
         assert logger_mock.debug.call_count == 1
         assert logger_mock.debug.call_args == mock.call('sending mail')
+        assert mock.call('alternative') in mimemultipart_mock.mock_calls
+        assert mock.call().__setitem__('subject', 'foo bar baz') in mimemultipart_mock.mock_calls
+        assert mock.call().__setitem__('To', 'foo@example.com,bar@example.com') in mimemultipart_mock.mock_calls
+        assert mock.call().__setitem__('From', 'username@nodename') in mimemultipart_mock.mock_calls
+        assert mimetext_mock.call_count == 1
+        assert mimetext_mock.call_args == mock.call('<html></html>', 'html')
+        assert smtp_mock.call_count == 1
+        assert smtp_mock_res.sendmail.call_count == 1
 
 
 class Test_query_data_for_timespan:
