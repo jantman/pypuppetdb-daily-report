@@ -270,13 +270,14 @@ class Test_get_data_for_timespan:
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock), \
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock), \
                 mock.patch('pickle.loads', pickle_mock):
-            result = pdr.get_data_for_timespan(None,
+            result = pdr.get_data_for_timespan('foobar',
+                                               None,
                                                datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
                                                datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59),
                                                cache_dir='/tmp/cache')
         assert path_exists_mock.call_count == 2
         assert path_exists_mock.call_args_list == [mock.call('/tmp/cache'),
-                                                   mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.pickle')
+                                                   mock.call('/tmp/cache/data_foobar_2014-06-10_00-00-00_2014-06-10_23-59-59.pickle')
                                                    ]
         assert mock_open.call_count == 1
         fh = mock_open.return_value.__enter__.return_value
@@ -314,13 +315,14 @@ class Test_get_data_for_timespan:
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock), \
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock), \
                 mock.patch('pickle.dumps', pickle_mock):
-            pdr.get_data_for_timespan(None,
+            pdr.get_data_for_timespan('foobar',
+                                      None,
                                       datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
                                       datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59),
                                       cache_dir='/tmp/cache')
         assert os_mock.path.exists.call_count == 2
         assert os_mock.path.exists.call_args_list == [mock.call('/tmp/cache'),
-                                                      mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.pickle')
+                                                      mock.call('/tmp/cache/data_foobar_2014-06-10_00-00-00_2014-06-10_23-59-59.pickle')
                                                       ]
         assert os_mock.makedirs.call_count == 1
         assert os_mock.makedirs.call_args == mock.call('/tmp/cache')
@@ -364,13 +366,14 @@ class Test_get_data_for_timespan:
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock), \
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock), \
                 mock.patch('pickle.dumps', pickle_mock):
-            pdr.get_data_for_timespan(None,
+            pdr.get_data_for_timespan('foobar',
+                                      None,
                                       datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
                                       datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59),
                                       cache_dir='/tmp/cache')
         assert os_mock.path.exists.call_count == 2
         assert os_mock.path.exists.call_args_list == [mock.call('/tmp/cache'),
-                                                      mock.call('/tmp/cache/data_2014-06-10_00-00-00_2014-06-10_23-59-59.pickle')
+                                                      mock.call('/tmp/cache/data_foobar_2014-06-10_00-00-00_2014-06-10_23-59-59.pickle')
                                                       ]
         assert mock_open.call_count == 1
         fh = mock_open.return_value.__enter__.return_value
@@ -407,7 +410,8 @@ class Test_get_data_for_timespan:
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.query_data_for_timespan', query_mock), \
                 mock.patch('pypuppetdb_daily_report.pypuppetdb_daily_report.logger', logger_mock), \
                 mock.patch('pickle.dumps', pickle_mock):
-            pdr.get_data_for_timespan(None,
+            pdr.get_data_for_timespan('foobar',
+                                      None,
                                       datetime.datetime(2014, 6, 10, hour=0, minute=0, second=0),
                                       datetime.datetime(2014, 6, 10, hour=23, minute=59, second=59),
                                       cache_dir=None)
@@ -485,13 +489,13 @@ class Test_main:
 
         assert dft_mock.call_count == 7
         dft_expected = [
-            mock.call(pdb_mock, FakeDatetime(2014, 6, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 6, 9, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 10, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 6, 8, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 9, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 6, 7, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 8, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 6, 6, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 7, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 6, 5, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 6, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
-            mock.call(pdb_mock, FakeDatetime(2014, 6, 4, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 5, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call('foobar', pdb_mock, FakeDatetime(2014, 6, 10, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 11, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call('foobar', pdb_mock, FakeDatetime(2014, 6, 9, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 10, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call('foobar', pdb_mock, FakeDatetime(2014, 6, 8, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 9, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call('foobar', pdb_mock, FakeDatetime(2014, 6, 7, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 8, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call('foobar', pdb_mock, FakeDatetime(2014, 6, 6, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 7, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call('foobar', pdb_mock, FakeDatetime(2014, 6, 5, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 6, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
+            mock.call('foobar', pdb_mock, FakeDatetime(2014, 6, 4, hour=4, minute=0, second=0, tzinfo=pytz.utc), FakeDatetime(2014, 6, 5, hour=3, minute=59, second=59, tzinfo=pytz.utc), cache_dir=None),
         ]
         assert dft_mock.mock_calls == dft_expected
 
