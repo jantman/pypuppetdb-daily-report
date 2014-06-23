@@ -48,6 +48,9 @@ from ago import delta2dict
 from collections import defaultdict, OrderedDict
 from platform import node as platform_node
 from getpass import getuser
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import smtplib
 
 import pickle
 
@@ -61,12 +64,14 @@ RUNS_PER_DAY = 40
 FACTS = ['puppetversion', 'facterversion', 'lsbdistdescription']
 
 
-def main(hostname, num_days=7, cache_dir=None, dry_run=False):
+def main(hostname, to=None, num_days=7, cache_dir=None, dry_run=False):
     """
     main entry point
 
     :param hostname: PuppetDB hostname
     :type hostname: string
+    :param to: list of addresses to send mail to
+    :type to: list
     :param num_days: the number of days to report on, default 7
     :type num_days: int
     :param cache_dir: absolute path to where to cache data from PuppetDB
@@ -81,14 +86,17 @@ def main(hostname, num_days=7, cache_dir=None, dry_run=False):
     dates = []  # ordered
     date_list = get_date_list(num_days)
     localtz = tzlocal.get_localzone()
+    start_date = date_list[0]
+    end_date = date_list[-1] - datetime.timedelta(hours=23, minutes=59, seconds=59)
     for query_date in date_list:
         end = query_date
         start = query_date - datetime.timedelta(days=1) + datetime.timedelta(seconds=1)
         date_s = (query_date - datetime.timedelta(hours=1)).astimezone(localtz).strftime('%a %m/%d')
         date_data[date_s] = get_data_for_timespan(hostname, pdb, start, end, cache_dir=cache_dir)
         dates.append(date_s)
-    html = format_html(hostname, dates, date_data, date_list[0], (date_list[-1] - datetime.timedelta(hours=23, minutes=59, seconds=59)))
-    send_mail(html, dry_run=dry_run)
+    html = format_html(hostname, dates, date_data, start_date, end_date)
+    subject = 'daily puppet(db) run summary for {host}'.format(host=hostname)
+    send_mail(to, subject, html, dry_run=dry_run)
     return True
 
 
@@ -534,7 +542,7 @@ def metric_value(m):
     return m
 
 
-def send_mail(html, dry_run=False):
+def send_mail(to, subject, html, dry_run=False):
     """
     Send the message
 
@@ -547,8 +555,17 @@ def send_mail(html, dry_run=False):
         with open('output.html', 'w') as fh:
             fh.write(html)
         logger.warning("DRY RUN - not sending mail; wrote body to ./output.html")
-    else:
-        logger.debug("sending mail")
+        return True
+    logger.debug("sending mail")
+    msg = MIMEMultipart('alternative')
+    msg['subject'] = subject
+    msg['To'] = ','.join(to)
+    msg['From'] = '{user}@{host}'.format(user=getuser(), host=platform_node())
+    body = MIMEText(html, 'html')
+    msg.attach(body)
+    # send
+    s = smtplib.SMTP()
+    s.sendmail(msg['From'], to, msg.as_string())
     return True
 
 
@@ -572,7 +589,15 @@ def parse_args(argv):
     p.add_option('-c', '--cache-dir', dest='cache_dir', action='store', type='string', default=cache_dir,
                  help='data cache directory (default: {cache_dir})'.format(cache_dir=cache_dir))
 
+    p.add_option('-t', '--to', dest='to_str', action='store', type='string',
+                 help='csv list of addresses to send mail to')
+
     options, args = p.parse_args(argv)
+
+    if options.to_str and ',' in options.to_str:
+        options.to = options.to_str.split(',')
+    else:
+        options.to = [options.to_str]
 
     return options
 
@@ -586,9 +611,12 @@ def console_entry_point():
     elif opts.verbose > 0:
         logger.setLevel(logging.INFO)
 
+    if not opts.to and not opts.dry_run:
+        raise SystemExit("ERROR: you must either run with --dry-run or specify to address(es) with --to")
+
     if not opts.host:
         raise SystemExit("ERROR: you must specify the PuppetDB hostname with -p|--puppetdb")
-    main(opts.host, num_days=opts.num_days, dry_run=opts.dry_run, cache_dir=opts.cache_dir)
+    main(opts.host, to=opts.to, num_days=opts.num_days, dry_run=opts.dry_run, cache_dir=opts.cache_dir)
 
 
 if __name__ == "__main__":
