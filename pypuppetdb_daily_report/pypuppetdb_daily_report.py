@@ -564,7 +564,7 @@ def send_mail(to, subject, html, dry_run=False):
     body = MIMEText(html, 'html')
     msg.attach(body)
     # send
-    s = smtplib.SMTP()
+    s = smtplib.SMTP('localhost')
     s.sendmail(msg['From'], to, msg.as_string())
     return True
 

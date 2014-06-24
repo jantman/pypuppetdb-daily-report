@@ -657,6 +657,7 @@ class Test_send_mail:
         assert mimetext_mock.call_count == 1
         assert mimetext_mock.call_args == mock.call('<html></html>', 'html')
         assert smtp_mock.call_count == 1
+        assert smtp_mock.call_args == mock.call('localhost')
         assert smtp_mock_res.sendmail.call_count == 1
 
 
