@@ -12,6 +12,7 @@ install:
   - git config --global user.name "travisci"
   - pip install tox
   - pip install coveralls
+  - pip freeze
 
 script:
   - tox -r
