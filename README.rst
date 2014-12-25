@@ -16,6 +16,10 @@ pypuppetdb_daily_report
    :target: https://coveralls.io/r/jantman/pypuppetdb-daily-report?branch=master
    :alt: coverage report for master branch
 
+.. image:: http://www.repostatus.org/badges/0.1.0/active.svg
+   :alt: Project Status: Active - The project has reached a stable, usable state and is being actively developed.
+   :target: http://www.repostatus.org/#active
+
 A daily run summary report for PuppetDB, written in Python using `nedap's pypuppetdb <https://github.com/nedap/pypuppetdb>`_ module.
 
 For an example of the current version's output, see `https://rawgithub.com/jantman/pypuppetdb-daily-report/master/example_output.html <https://rawgithub.com/jantman/pypuppetdb-daily-report/master/example_output.html>`_.
