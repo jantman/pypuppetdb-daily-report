@@ -12,8 +12,8 @@ pypuppetdb_daily_report
    :target: http://travis-ci.org/jantman/pypuppetdb-daily-report
    :alt: travis-ci for master branch
 
-.. image:: https://coveralls.io/repos/jantman/pypuppetdb-daily-report/badge.png?branch=master
-   :target: https://coveralls.io/r/jantman/pypuppetdb-daily-report?branch=master
+.. image:: https://codecov.io/github/jantman/pypuppetdb-daily-report/coverage.svg?branch=master
+   :target: https://codecov.io/github/jantman/pypuppetdb-daily-report?branch=master
    :alt: coverage report for master branch
 
 .. image:: http://www.repostatus.org/badges/0.1.0/active.svg
