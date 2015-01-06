@@ -7,6 +7,9 @@ pypuppetdb_daily_report
 .. image:: https://pypip.in/d/pypuppetdb_daily_report/badge.png
    :target: https://crate.io/packages/pypuppetdb_daily_report
 
+.. image:: https://landscape.io/github/jantman/pypuppetdb-daily-report/master/landscape.svg
+   :target: https://landscape.io/github/jantman/pypuppetdb-daily-report/master
+   :alt: Code Health
 
 .. image:: https://secure.travis-ci.org/jantman/pypuppetdb-daily-report.png?branch=master
    :target: http://travis-ci.org/jantman/pypuppetdb-daily-report
