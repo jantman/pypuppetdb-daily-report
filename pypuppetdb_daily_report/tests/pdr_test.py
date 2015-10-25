@@ -506,7 +506,7 @@ class Test_main:
                  'Wed 06/04'
                  ]
 
-        pdb_mock = mock.MagicMock(spec='pypuppetdb.api.v3.API')
+        pdb_mock = mock.MagicMock(spec='pypuppetdb.api.BaseAPI')
         connect_mock = mock.MagicMock()
         connect_mock.return_value = pdb_mock
         format_html_mock = mock.MagicMock()
@@ -672,7 +672,7 @@ class Test_query_data_for_timespan:
         node2.name = u'node2'
         node3 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
         node3.name = u'node3'
-        pdb_mock = mock.MagicMock(spec=pypuppetdb.api.v3.API, autospec=True)
+        pdb_mock = mock.MagicMock(spec=pypuppetdb.api.BaseAPI, autospec=True)
         pdb_mock.nodes.return_value = iter([node1, node2, node3])
         logger_mock = mock.MagicMock()
         get_metrics_mock = mock.MagicMock()
@@ -725,7 +725,7 @@ class Test_query_data_for_timespan:
         node2.name = u'node2'
         node3 = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
         node3.name = u'node3'
-        pdb_mock = mock.MagicMock(spec=pypuppetdb.api.v3.API, autospec=True)
+        pdb_mock = mock.MagicMock(spec=pypuppetdb.api.BaseAPI, autospec=True)
         pdb_mock.nodes.return_value = iter([node1, node2, node3])
         logger_mock = mock.MagicMock()
         get_metrics_mock = mock.MagicMock()
@@ -804,7 +804,7 @@ class Test_query_data_for_node:
 
     def test_iterate_reports(self):
         """ simple test of default code path """
-        pdb_mock = mock.MagicMock(spec=pypuppetdb.api.v3.API, autospec=True)
+        pdb_mock = mock.MagicMock(spec=pypuppetdb.api.BaseAPI, autospec=True)
         node_mock = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
         node_mock.name = 'node1.example.com'
         logger_mock = mock.MagicMock()
@@ -836,7 +836,7 @@ class Test_query_data_for_node:
 
     def test_iterate_events(self):
         """ test iterating over events """
-        pdb_mock = mock.MagicMock(spec=pypuppetdb.api.v3.API, autospec=True)
+        pdb_mock = mock.MagicMock(spec=pypuppetdb.api.BaseAPI, autospec=True)
         logger_mock = mock.MagicMock()
         node_mock = mock.MagicMock(spec=pypuppetdb.types.Node, autospec=True)
         node_mock.name = 'node1.example.com'

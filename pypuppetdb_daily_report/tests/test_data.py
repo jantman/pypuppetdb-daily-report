@@ -387,6 +387,10 @@ EVENT_DATA = {
             u'present',
             u'absent',
             u'Package',
+            u'ClassName',
+            u'execution_path',
+            u'source_file',
+            100
         ),
     ],
     '["=", "report", "hash2"]': [
@@ -401,6 +405,10 @@ EVENT_DATA = {
             u'present',
             u'absent',
             u'Package',
+            u'ClassName',
+            u'execution_path',
+            u'source_file',
+            100
         ),
         Event(
             u'node1.example.com',
@@ -413,6 +421,10 @@ EVENT_DATA = {
             None,
             None,
             u'Service',
+            u'ClassName',
+            u'execution_path',
+            u'source_file',
+            100
         ),
         Event(
             u'node1.example.com',
@@ -425,6 +437,10 @@ EVENT_DATA = {
             u'latest',
             u'2.2.26-3.el5',
             u'Package',
+            u'ClassName',
+            u'execution_path',
+            u'source_file',
+            100
         ),
         Event(
             u'node1.example.com',
@@ -437,6 +453,10 @@ EVENT_DATA = {
             None,
             None,
             u'Augeas',
+            u'ClassName',
+            u'execution_path',
+            u'source_file',
+            100
         ),
     ],
     '["=", "report", "hash3"]': [
@@ -451,6 +471,10 @@ EVENT_DATA = {
             [u'0'],
             u'notrun',
             u'Exec',
+            u'ClassName',
+            u'execution_path',
+            u'source_file',
+            100
         ),
         Event(
             u'node1.example.com',
@@ -463,6 +487,10 @@ EVENT_DATA = {
             u'running',
             u'stopped',
             u'Service',
+            u'ClassName',
+            u'execution_path',
+            u'source_file',
+            100
         ),
         Event(
             u'node1.example.com',
@@ -475,6 +503,10 @@ EVENT_DATA = {
             u'running',
             u'stopped',
             u'Service',
+            u'ClassName',
+            u'execution_path',
+            u'source_file',
+            100
         ),
     ],
     '["=", "report", "hash4"]': [
@@ -489,6 +521,10 @@ EVENT_DATA = {
             u'present',
             u'absent',
             u'Package',
+            u'ClassName',
+            u'execution_path',
+            u'source_file',
+            100
         ),
         Event(
             u'node1.example.com',
@@ -501,6 +537,10 @@ EVENT_DATA = {
             u'running',
             u'stopped',
             u'Service',
+            u'ClassName',
+            u'execution_path',
+            u'source_file',
+            100
         ),
     ],
 }

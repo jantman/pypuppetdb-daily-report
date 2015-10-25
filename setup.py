@@ -2,7 +2,7 @@ from setuptools import setup
 from sys import version_info
 from pypuppetdb_daily_report import VERSION
 
-pyver_requires = ['pypuppetdb>=0.1.0, <=1.0.0',
+pyver_requires = ['pypuppetdb>=0.2.0, <=0.3.0',
                   'anyjson>=0.3.0, <=1.0.0',
                   'Jinja2>=2.7.0, <=2.8.0',
                   'pytz>=2014.4',
