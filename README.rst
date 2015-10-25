@@ -27,6 +27,8 @@ A daily run summary report for PuppetDB, written in Python using `nedap's pypupp
 
 For an example of the current version's output, see `https://rawgithub.com/jantman/pypuppetdb-daily-report/master/example_output.html <https://rawgithub.com/jantman/pypuppetdb-daily-report/master/example_output.html>`_.
 
+**NOTE:** From version 0.2.0 on, `pypuppetdb <https://github.com/nedap/pypuppetdb>`_ only supports the PuppetDB Query API Version 4 (introduced as experimental in PuppetDB 2.0 and the default in PuppetDB 3.0). There were also subtle backwards-incompatible changes in pypuppetdb 0.2.0 that required code changes in this project. As a result, to use pypuppetdb_daily_report with PuppetDB 1.x (or possibly with 2.x), you will need to install ``pypuppetdb_daily_report==0.0.2`` and ``pypuppetdb==0.1.1``.
+
 The report displays the following for the current point-in-time:
 
 * the current values of 'puppetversion', 'facterversion' and 'lsbdistdescription' facts

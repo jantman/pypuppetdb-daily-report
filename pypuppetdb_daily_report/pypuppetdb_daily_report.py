@@ -64,7 +64,8 @@ RUNS_PER_DAY = 40
 FACTS = ['puppetversion', 'facterversion', 'lsbdistdescription']
 
 
-def main(hostname, to=None, num_days=7, cache_dir=None, dry_run=False):
+def main(hostname, to=None, num_days=7, cache_dir=None,
+         dry_run=False, port=8080):
     """
     main entry point
 
@@ -78,8 +79,10 @@ def main(hostname, to=None, num_days=7, cache_dir=None, dry_run=False):
     :type cache_dir: string
     :param dry_run: whether to actually send, or just print what would be sent
     :type dry_run: boolean
+    :param port: port to connect to PuppetDB on
+    :type port: int
     """
-    pdb = connect(host=hostname)
+    pdb = connect(host=hostname, port=port)
 
     # essentially figure out all these for yesterday, build the tables, serialize the result as JSON somewhere. then just keep the last ~7 days json files
     date_data = {}
@@ -575,6 +578,10 @@ def parse_args(argv):
     p.add_option('-p', '--puppetdb', dest='host', action='store', type='string',
                  help='PuppetDB hostname')
 
+    p.add_option('-P', '--port', dest='port', action='store', type=int,
+                 default=8080, help='port to connect to PuppetDB on '
+                 '(default: 8080')
+
     p.add_option('-n', '--num-days', dest='num_days', action='store', type='int', default=7,
                  help='Number of days to report on; default 7')
 
@@ -615,7 +622,8 @@ def console_entry_point():
 
     if not opts.host:
         raise SystemExit("ERROR: you must specify the PuppetDB hostname with -p|--puppetdb")
-    main(opts.host, to=opts.to, num_days=opts.num_days, dry_run=opts.dry_run, cache_dir=opts.cache_dir)
+    main(opts.host, to=opts.to, num_days=opts.num_days, dry_run=opts.dry_run,
+         cache_dir=opts.cache_dir, port=opts.port)
 
 
 if __name__ == "__main__":

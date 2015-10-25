@@ -88,6 +88,7 @@ class Test_parse_args:
         assert x.dry_run == False
         assert x.verbose == 0
         assert x.cache_dir == '/foobar/.pypuppetdb_daily_report'
+        assert x.port == 8080
 
     def test_cache_dir(self):
         """
@@ -120,6 +121,11 @@ class Test_parse_args:
         argv = ['pypuppetdb_daily_report', '-v']
         x = pdr.parse_args(argv)
         assert x.verbose == 1
+
+    def test_port(self):
+        argv = ['pypuppetdb_daily_report', '-P', '1000']
+        x = pdr.parse_args(argv)
+        assert x.port == 1000
 
     def test_debug(self):
         """
@@ -174,6 +180,7 @@ class Test_console_entry_point:
         opts_o = OptionsObject()
         opts_o.host = 'foobar'
         opts_o.to = ['foo@example.com']
+        opts_o.port = 8080
         parse_args_mock.return_value = opts_o
 
         main_mock = mock.MagicMock()
@@ -183,17 +190,21 @@ class Test_console_entry_point:
             pdr.console_entry_point()
         assert parse_args_mock.call_count == 1
         assert main_mock.call_count == 1
-        assert main_mock.call_args == mock.call('foobar',
-                                                to=['foo@example.com'],
-                                                num_days=7,
-                                                dry_run=False,
-                                                cache_dir='/tmp/.pypuppetdb_daily_report')
+        assert main_mock.call_args == mock.call(
+            'foobar',
+            to=['foo@example.com'],
+            num_days=7,
+            dry_run=False,
+            cache_dir='/tmp/.pypuppetdb_daily_report',
+            port=8080
+        )
 
     def test_nohost(self):
         """ without a host specified """
         parse_args_mock = mock.MagicMock()
         opts_o = OptionsObject()
         opts_o.to = ['foo@example.com']
+        opts_o.port = 8080
         parse_args_mock.return_value = opts_o
         main_mock = mock.MagicMock()
 
@@ -212,6 +223,7 @@ class Test_console_entry_point:
         opts_o.host = 'foobar'
         opts_o.verbose = 1
         opts_o.to = ['foo@example.com']
+        opts_o.port = 8080
         parse_args_mock.return_value = opts_o
         logger_mock = mock.MagicMock()
         main_mock = mock.MagicMock()
@@ -232,6 +244,7 @@ class Test_console_entry_point:
         opts_o.host = 'foobar'
         opts_o.verbose = 2
         opts_o.to = ['foo@example.com']
+        opts_o.port = 8080
         parse_args_mock.return_value = opts_o
         logger_mock = mock.MagicMock()
         main_mock = mock.MagicMock()
@@ -250,6 +263,7 @@ class Test_console_entry_point:
         parse_args_mock = mock.MagicMock()
         opts_o = OptionsObject()
         opts_o.host = 'foobar'
+        opts_o.port = 8080
         parse_args_mock.return_value = opts_o
         main_mock = mock.MagicMock()
 
@@ -528,7 +542,7 @@ class Test_main:
                 mock.patch('tzlocal.get_localzone', localzone_mock):
             pdr.main('foobar', to=['foo@example.com'])
         assert connect_mock.call_count == 1
-        assert connect_mock.call_args == mock.call(host='foobar')
+        assert connect_mock.call_args == mock.call(host='foobar', port=8080)
 
         assert dft_mock.call_count == 7
         dft_expected = [
@@ -551,7 +565,12 @@ class Test_main:
                       )
         assert format_html_mock.call_args == r
         assert send_mail_mock.call_count == 1
-        assert send_mail_mock.call_args == mock.call(['foo@example.com'], 'daily puppet(db) run summary for foobar', 'foo bar baz', dry_run=False)
+        assert send_mail_mock.call_args == mock.call(
+            ['foo@example.com'],
+            'daily puppet(db) run summary for foobar',
+            'foo bar baz',
+            dry_run=False
+        )
 
 
 class Test_get_date_list:
