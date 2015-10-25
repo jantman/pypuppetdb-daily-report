@@ -165,8 +165,7 @@ def filter_resource_dict_sort(d):
     sorted reverse by value and alphabetically by key within each value set.
     """
     items = list(d.items())
-    keyfunc = lambda x: tuple([-x[1]] + list(x[0]))
-    return OrderedDict(sorted(items, key=keyfunc))
+    return OrderedDict(sorted(items, key=lambda x: tuple([-x[1]] + list(x[0]))))
 
 
 def filter_report_metric_name(s):
