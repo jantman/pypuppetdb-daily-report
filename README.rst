@@ -19,9 +19,11 @@ pypuppetdb_daily_report
    :target: https://codecov.io/github/jantman/pypuppetdb-daily-report?branch=master
    :alt: coverage report for master branch
 
-.. image:: http://www.repostatus.org/badges/0.1.0/active.svg
-   :alt: Project Status: Active - The project has reached a stable, usable state and is being actively developed.
-   :target: http://www.repostatus.org/#active
+.. image:: http://www.repostatus.org/badges/latest/unsupported.svg
+   :alt: Project Status: Unsupported – The project has reached a stable, usable state but the author(s) have ceased all work on it. A new maintainer may be desired.
+   :target: http://www.repostatus.org/#unsupported
+
+**Project Abandoned as of March 2016:** I no longer run PuppetDB, as my new employer uses a masterless, ephemeral infrastructure. The upstream pypuppetdb project has changed, and I have no way of testing this project further. If anyone is interested in taking over, please contact me.
 
 A daily run summary report for PuppetDB, written in Python using `nedap's pypuppetdb <https://github.com/nedap/pypuppetdb>`_ module.
 
